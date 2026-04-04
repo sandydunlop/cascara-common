@@ -43,7 +43,7 @@ public class SimpleReporter implements Reporter {
     }
 
     /// Reports an trace message through the reporter.
-    /// @param m The message to report.
+    /// @param msg The message to report.
     @Override
     public void trace(Object... msg) {
         String message = format(msg);
@@ -53,7 +53,7 @@ public class SimpleReporter implements Reporter {
     }
 
     /// Reports an debug message through the reporter.
-    /// @param m The message to report.
+    /// @param msg The message to report.
     @Override
     public void debug(Object... msg) {
         String message = format(msg);
@@ -63,7 +63,7 @@ public class SimpleReporter implements Reporter {
     }
 
     /// Reports an informational message through the reporter.
-    /// @param m The message to report.
+    /// @param msg The message to report.
     @Override
     public void info(Object... msg) {
         String message = format(msg);
@@ -73,7 +73,7 @@ public class SimpleReporter implements Reporter {
     }
 
     /// Reports a warning message including location information.
-    /// @param m The warning message to report.
+    /// @param msg The warning message to report.
     @Override
     public void warn(Object... msg) {
         String message = format(msg);
@@ -83,7 +83,7 @@ public class SimpleReporter implements Reporter {
     }
 
     /// Reports an error message including location information.
-    /// @param m The error message to report.
+    /// @param msg The error message to report.
     @Override
     public void error(Object... msg) {
         String message = format(msg);

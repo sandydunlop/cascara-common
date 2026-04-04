@@ -1,7 +1,7 @@
 package io.github.qishr.cascara.common.lang;
 
 /// Base class for all language-specific configuration.
-/// @param T The specific implementation type for fluent chaining.
+/// T is the specific implementation type for fluent chaining.
 public abstract class LanguageOptions<T extends LanguageOptions<T>> {
     protected int indentSize = 2;
     protected boolean insertSpaces = true;
