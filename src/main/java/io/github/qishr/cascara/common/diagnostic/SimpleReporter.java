@@ -10,6 +10,7 @@ public class SimpleReporter implements Reporter {
     private ReportWriter logger = null;
     private ReportCollector collector = null;
     private boolean disableSystemOutput = false;
+    private boolean disableFlush = true;
 
     public SimpleReporter(ReportWriter logger) {
         this.logger = logger;
@@ -42,7 +43,12 @@ public class SimpleReporter implements Reporter {
         return this;
     }
 
-    /// Reports an trace message through the reporter.
+    public SimpleReporter setDisableFlush(boolean b) {
+        this.disableFlush = b;
+        return this;
+    }
+
+    /// Reports a trace message through the reporter.
     /// @param msg The message to report.
     @Override
     public void trace(Object... msg) {
@@ -52,7 +58,7 @@ public class SimpleReporter implements Reporter {
         }
     }
 
-    /// Reports an debug message through the reporter.
+    /// Reports a debug message through the reporter.
     /// @param msg The message to report.
     @Override
     public void debug(Object... msg) {
@@ -97,10 +103,6 @@ public class SimpleReporter implements Reporter {
     @Override
     public void infoAt(int line, int column, URI uri, Object... msg) {
         String message = format(msg);
-        // if (level.compareTo(Level.INFO) >= 0) {
-        //     print(Level.INFO, message, line, column, uri);
-        // }
-        // collect(Level.INFO, message, line, column, uri);
         if (collector == null) {
             if (level.compareTo(Level.INFO) >= 0) {
                 print(Level.INFO, message, line, column, uri);
@@ -113,7 +115,7 @@ public class SimpleReporter implements Reporter {
     @Override
     public void warnAt(int line, int column, URI uri, Object... msg) {
         String message = format(msg);
-        collect(Level.INFO, message, line, column, uri);
+        collect(Level.WARNING, message, line, column, uri);
         if (collector == null) {
             if (level.compareTo(Level.WARNING) >= 0) {
                 print(Level.WARNING, message, line, column, uri);
@@ -160,7 +162,10 @@ public class SimpleReporter implements Reporter {
         if (logger != null) {
             logger.write(text);
         } else if (!disableSystemOutput) {
-            System.err.print(text);
+            System.out.print(text);
+            if (!disableFlush) {
+                System.out.flush();
+            }
         }
     }
 
@@ -174,7 +179,7 @@ public class SimpleReporter implements Reporter {
                 return String.format(m, Arrays.<Object>copyOfRange(s, 1, s.length));
             }
         } else {
-            return "First parameter must be of type String or Integer";
+            return "First parameter must be of type String";
         }
     }
 }

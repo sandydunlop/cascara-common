@@ -49,7 +49,7 @@ public class Property {
     }
 
     public void setValue(int v) {
-        value = Integer.toString(v);
+        value = Long.toString(v);
         kind = Kind.NUMBER;
     }
 
@@ -59,7 +59,7 @@ public class Property {
     }
 
     public double getDouble() {
-        return getDouble(0);
+        return getDouble(-1);
     }
 
     public double getDouble(double defaultValue) {
@@ -71,15 +71,27 @@ public class Property {
     }
 
     public int getInt() {
-        return getInt(0);
+        return getInt(-1);
+    }
+
+    public long getLong() {
+        return getLong(-1);
     }
 
     public int getInt(int defaultValue) {
+        return (int) getLong(defaultValue);
+    }
+
+    public long getLong(int defaultValue) {
         try {
-            return Integer.parseInt(value);
+            return Long.parseLong(value);
         } catch (NumberFormatException _) {
-            return defaultValue;
         }
+        try {
+            return Double.valueOf(value).longValue();
+        } catch (NumberFormatException _) {
+        }
+        return defaultValue;
     }
 
     public boolean getBoolean() {
