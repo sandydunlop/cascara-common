@@ -9,4 +9,6 @@ public interface ContentType {
     public List<String> getSuffixes();
     public String getModuleId();
     public String toString();
+    boolean matches(String mimeType);
+    boolean matches(ContentType contentType);
 }
