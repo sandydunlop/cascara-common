@@ -1,7 +1,7 @@
 plugins {
     id 'maven-publish'
-    id 'cascara.java-library' version '0.1.0'
-    id "cascara.publish" version "0.1.0"
+    id 'cascara.build.java-library' version '0.1.0'
+    id "cascara.build.publish" version "0.1.0"
 }
 
 
