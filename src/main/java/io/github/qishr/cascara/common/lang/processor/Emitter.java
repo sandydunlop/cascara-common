@@ -1,5 +1,7 @@
 package io.github.qishr.cascara.common.lang.processor;
 
+import io.github.qishr.cascara.common.content.ContentType;
+
 /// A generic interface for emitting structured text.
 public interface Emitter extends Processor {
     /// Writes a literal scalar value.
@@ -30,4 +32,6 @@ public interface Emitter extends Processor {
 
     /// Returns the final produced string.
     String getOutput();
+
+    ContentType getContentType();
 }
