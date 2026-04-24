@@ -9,7 +9,7 @@ public class CascaraResourceProvider implements ResourceProvider {
 
     @Override
     public ResourceStream getResourceAsStream(URI uri) throws IOException {
-        throw new UnsupportedOperationException("Unimplemented method 'getContentAsStream'");
+        throw new UnsupportedOperationException("Unimplemented method 'CascaraResourceProvider.getContentAsStream'");
     }
 
 }

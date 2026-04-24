@@ -5,16 +5,15 @@ import java.util.ServiceLoader;
 import io.github.qishr.cascara.common.content.ContentType;
 import io.github.qishr.cascara.common.lang.annotation.Nullable;
 import io.github.qishr.cascara.common.lang.processor.AstConverter;
-import io.github.qishr.cascara.common.lang.processor.Emitter;
 
 public class AstConverterFactory {
 
     @Nullable
-    public AstConverter<?> create(String type) {
+    public AstConverter<?> create(String type) throws ServiceException {
         return findEmitter(ServiceLoader.load(AstConverter.class), type);
     }
 
-    private <T extends AstConverter<?>> T findEmitter(ServiceLoader<T> loader, String type) {
+    private <T extends AstConverter<?>> T findEmitter(ServiceLoader<T> loader, String type) throws ServiceException {
         for (ServiceLoader.Provider<T> provider : loader.stream().toList()) {
             try {
                 T converter = provider.get();
@@ -25,8 +24,15 @@ public class AstConverterFactory {
                     || contentType.getName().equalsIgnoreCase(type)) {
                     return converter;
                 }
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+                throw new ServiceException(e.getMessage(), e);
             } catch (RuntimeException e) {
+                e.printStackTrace();
+                throw new ServiceException(e.getMessage(), e);
             } catch (Exception e) {
+                e.printStackTrace();
+                throw new ServiceException(e.getMessage(), e);
             }
         }
         return null;
