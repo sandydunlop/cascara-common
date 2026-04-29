@@ -1,10 +1,8 @@
-package io.github.qishr.cascara.common;
+package io.github.qishr.cascara.common.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
-
-import io.github.qishr.cascara.common.util.Property;
 
 public class PropertyTests {
 

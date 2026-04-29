@@ -1,6 +1,6 @@
 package io.github.qishr.cascara.common.lang.processor;
 
-import io.github.qishr.cascara.common.content.ContentType;
+import io.github.qishr.cascara.common.util.ContentType;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 
 public interface AstConverter<T extends AstNode> {

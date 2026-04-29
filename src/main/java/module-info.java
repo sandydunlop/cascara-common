@@ -6,11 +6,11 @@ module cascara.common {
     uses io.github.qishr.cascara.common.lang.processor.Parser;
 
     exports io.github.qishr.cascara.common.lang.annotation;
-    exports io.github.qishr.cascara.common.content;
+    // exports io.github.qishr.cascara.common.content;
     exports io.github.qishr.cascara.common.diagnostic;
-    exports io.github.qishr.cascara.common.io;
-    exports io.github.qishr.cascara.common.io.filewatcher;
-    exports io.github.qishr.cascara.common.io.provider;
+    // exports io.github.qishr.cascara.common.io;
+    // exports io.github.qishr.cascara.common.io.filewatcher;
+    // exports io.github.qishr.cascara.common.io.provider;
     exports io.github.qishr.cascara.common.lang;
     exports io.github.qishr.cascara.common.lang.ast;
     exports io.github.qishr.cascara.common.lang.exception;
@@ -22,5 +22,5 @@ module cascara.common {
     exports io.github.qishr.cascara.common.spi;
     exports io.github.qishr.cascara.common.util;
 
-    opens io.github.qishr.cascara.common.content;
+    opens io.github.qishr.cascara.common.util;
 }
