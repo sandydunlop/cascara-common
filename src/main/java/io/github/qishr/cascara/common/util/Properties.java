@@ -43,6 +43,14 @@ public class Properties {
         return property.getInt(defaultValue);
     }
 
+    public long getLong(String k, int defaultValue) {
+        Property property = get(k);
+        if (property == null) {
+            return defaultValue;
+        }
+        return property.getLong(defaultValue);
+    }
+
     public double getDouble(String k, double defaultValue) {
         Property property = get(k);
         if (property == null) {
