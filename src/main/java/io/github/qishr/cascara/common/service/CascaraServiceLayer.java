@@ -35,7 +35,7 @@ public class CascaraServiceLayer {
     private List<CascaraServiceLayer> allLayers = new ArrayList<>();
     private Map<String,CascaraServiceLayer> namedLayers = new HashMap<>();
     private Map<String,CascaraServiceMetadata> services = new HashMap<>();
-    private Map<Class<?>, Set<CascaraServiceMetadata>> metadataForType = new HashMap<>();
+    private Map<Class<?>, Set<CascaraServiceMetadata>> metadataForServiceType = new HashMap<>();
 
     private CascaraServiceLayer() { }
 
@@ -78,10 +78,15 @@ public class CascaraServiceLayer {
         }
     }
 
+    public <T> CascaraServiceMetadata getProviderMetadata(String providerName) {
+        CascaraServiceMetadata meta = services.get(providerName);
+        return meta;
+    }
+
     public <T> Collection<CascaraServiceMetadata> getProvidersMetadata(Class<T> serviceType) {
         Collection<CascaraServiceMetadata> requested = new ArrayList<>();
-        if (metadataForType.get(serviceType) != null) {
-            requested.addAll(metadataForType.get(serviceType));
+        if (metadataForServiceType.get(serviceType) != null) {
+            requested.addAll(metadataForServiceType.get(serviceType));
         }
 
         if (parent != null) {
@@ -168,7 +173,7 @@ public class CascaraServiceLayer {
     /// Use SPI to find the service implementations inside this layer
     private <P> void enumerateModules() {
         services.clear();
-        metadataForType.clear();
+        metadataForServiceType.clear();
         var loader = ServiceLoader.load(moduleLayer, CascaraService.class);
         loader.forEach(provider -> {
             Path jarPath = modulePath.getPathForModule(provider.getClass().getModule().getName());
@@ -201,10 +206,10 @@ public class CascaraServiceLayer {
 
                 for (Class<?> interfaceType : interfaceHierarchy) {
 
-                    Set<CascaraServiceMetadata> metas = metadataForType.get(interfaceType);
+                    Set<CascaraServiceMetadata> metas = metadataForServiceType.get(interfaceType);
                     if (metas == null) {
                         metas = new HashSet<>();
-                        metadataForType.put(interfaceType, metas);
+                        metadataForServiceType.put(interfaceType, metas);
                     }
                     metas.add(meta);
                 }
