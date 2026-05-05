@@ -4,7 +4,7 @@ module cascara.common {
     uses io.github.qishr.cascara.common.lang.processor.AstConverter;
     uses io.github.qishr.cascara.common.lang.processor.Emitter;
     uses io.github.qishr.cascara.common.lang.processor.Parser;
-    uses io.github.qishr.cascara.common.service.CascaraService;
+    uses io.github.qishr.cascara.common.service.ServiceProvider;
 
     exports io.github.qishr.cascara.common.lang.annotation;
     exports io.github.qishr.cascara.common.diagnostic;
