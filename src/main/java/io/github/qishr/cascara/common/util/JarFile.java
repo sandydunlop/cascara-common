@@ -3,6 +3,7 @@ package io.github.qishr.cascara.common.util;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.module.InvalidModuleDescriptorException;
 import java.lang.module.ModuleDescriptor;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -133,7 +134,7 @@ public class JarFile extends ArchiveFile {
         try {
             descriptor = ModuleDescriptor.read(is);
             return descriptor.name();
-        } catch (IOException e) {
+        } catch (IOException | InvalidModuleDescriptorException e) {
             return null;
         }
     }
