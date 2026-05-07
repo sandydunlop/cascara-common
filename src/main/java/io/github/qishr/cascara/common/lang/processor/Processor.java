@@ -2,8 +2,12 @@ package io.github.qishr.cascara.common.lang.processor;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.lang.LanguageOptions;
+import io.github.qishr.cascara.common.service.ServiceProvider;
+import io.github.qishr.cascara.common.util.ContentType;
 
-public interface Processor {
+public interface Processor extends ServiceProvider {
+    ContentType getContentType();
+
     /// Sets the reporter for communicating mapping warnings or errors.
     Processor setReporter(Reporter reporter);
 

@@ -1,5 +1,6 @@
 package io.github.qishr.cascara.common.service;
 
+import java.io.IOException;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Provides;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 
 import io.github.qishr.cascara.common.diagnostic.NullReporter;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.ModulePath;
 import io.github.qishr.cascara.common.util.Properties;
 
@@ -67,6 +69,10 @@ public class ServiceProviderLayer {
         if (rootLayer == null) {
             rootLayer = new ServiceProviderLayer();
             rootLayer.name = "root";
+            ModuleLayer boot = ModuleLayer.boot();
+            boot.modules().forEach((module) -> {
+                rootLayer.registerModule(module);
+            });
         }
         return rootLayer;
     }
@@ -184,14 +190,26 @@ public class ServiceProviderLayer {
 
     @SuppressWarnings("rawtypes")
     public void registerModule(Module module) {
+        String moduleName = module.getName();
+        if (moduleName.startsWith("java.") ||
+            moduleName.startsWith("javax.") ||
+            moduleName.startsWith("jdk.")) {
+            // These modules will never contain a Cascara ServiceProvider
+            getReporter().debug("Module \"%s\" cannot contain Cascara ServiceProvider", moduleName);
+            return;
+        }
+        ClassLoader classLoader = module.getClassLoader();
+        if (classLoader == null) {
+            getReporter().warn("Module \"%s\" has no ClassLoader", moduleName);
+            return;
+        }
         ModuleDescriptor desc = module.getDescriptor();
         for (Provides provides : desc.provides()) {
             for (String provide : provides.providers()) {
                 try {
-                    Class<?> type = module.getClassLoader().loadClass(provide);
-                    if (ServiceProvider.class.isAssignableFrom(type)) {
-                        registerClass((Class)type);
-                    }
+                    getReporter().debug("[ServiceProviderLayer] Discovering providers in \"%s\"", moduleName);
+                    Class<?> type = classLoader.loadClass(provide);
+                    registerClass((Class)type);
                 } catch (ClassNotFoundException | ServiceException e) {
                     getReporter().warn("Failed to load class " + provide +". Cause: " + e.getMessage(), e);
                 }
@@ -200,7 +218,7 @@ public class ServiceProviderLayer {
     }
 
     public void registerClass(Class<?> type) {
-        if (!ServiceProvider.class.isAssignableFrom(type)) {
+        if (type == null || !ServiceProvider.class.isAssignableFrom(type)) {
             return;
         }
         try {
@@ -213,6 +231,23 @@ public class ServiceProviderLayer {
     }
 
     public void registerJar(Path jarPath) {
+        String moduleName;
+
+        try {
+            JarFile jar = JarFile.load(jarPath);
+            moduleName = jar.getModuleName();
+        } catch (IOException e) {
+            String message = String.format("Failed to read Jar \"%s\". Cause: " + e.getMessage(), jarPath);
+            throw new ServiceException(message, e);
+        }
+
+        if (moduleName == null || moduleName.isEmpty()) {
+            String message = String.format("Jar \"%s\" does not contain a module", jarPath);
+            throw new ServiceException(message);
+        }
+
+        getReporter().debug("[ServiceProviderLayer] Discovering providers in \"%s\"", jarPath);
+
         jarPaths.add(jarPath);
         String paths = String.join(":", getJarStrings());
         modulePath = new ModulePath(paths);
@@ -317,7 +352,10 @@ public class ServiceProviderLayer {
         if (location != null) {
             logMessage = logMessage + " " + location;
         }
-        getReporter().error(logMessage, t);
+        if (t != null) {
+            logMessage = logMessage + " " + t.getMessage();
+        }
+        getReporter().error(logMessage);
     }
 
     private Path[] getJarPaths() {

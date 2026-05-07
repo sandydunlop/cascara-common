@@ -92,7 +92,11 @@ public class ModulePath {
     private String processJar(File file, String moduleName) {
         try{
             JarFile jar = JarFile.load(file.toPath());
-            for (String className : jar.getClassNames()) {
+            Set<String> classNames = jar.getClassNames();
+            if (classNames == null) {
+                return null;
+            }
+            for (String className : classNames) {
                 classNames.add(className);
             }
             String jarModuleName = jar.getModuleName();
