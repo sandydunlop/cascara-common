@@ -18,7 +18,7 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.github.qishr.cascara.common.diagnostic.NullReporter;
+import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.ModulePath;
@@ -27,7 +27,7 @@ import io.github.qishr.cascara.common.util.Properties;
 public class ServiceProviderLayer {
     private static ServiceProviderLayer rootLayer;
 
-    private Reporter reporter = new NullReporter();
+    private Reporter reporter = new NoOpReporter();
     private boolean ownsReporter = false;
 
     private String name;
@@ -82,10 +82,12 @@ public class ServiceProviderLayer {
         return parent.getReporter();
     }
 
-    public void setReporter(Reporter repoter) {
-        if (reporter == null) return;
+    /// Sets the reporter for communicating mapping warnings or errors.
+    public ServiceProviderLayer setReporter(Reporter repoter) {
+        if (reporter == null) return this;
         this.reporter = repoter;
         this.ownsReporter = true;
+        return this;
     }
 
     @SuppressWarnings("unchecked")
