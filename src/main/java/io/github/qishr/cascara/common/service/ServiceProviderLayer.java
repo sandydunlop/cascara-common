@@ -5,7 +5,9 @@ import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleFinder;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,8 +20,8 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
+import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.ModulePath;
 import io.github.qishr.cascara.common.util.Properties;
@@ -28,6 +30,7 @@ public class ServiceProviderLayer {
     private static ServiceProviderLayer rootLayer;
 
     private Reporter reporter = new NoOpReporter();
+
     private boolean ownsReporter = false;
 
     private String name;
@@ -40,7 +43,7 @@ public class ServiceProviderLayer {
     private List<ServiceProviderLayer> allLayers = new ArrayList<>();
     private Map<String,ServiceProviderLayer> namedLayers = new HashMap<>();
     private Map<String,ServiceProviderMetadata> providers = new HashMap<>();
-    private Map<Class<?>, Set<ServiceProviderMetadata>> metadataForServiceType = new HashMap<>();
+    private Map<Class<ServiceProvider>, Set<ServiceProviderMetadata>> metadataForServiceType = new HashMap<>();
     private Map<String, Properties> capabilitiesForProvider = new HashMap<>();
 
     private ServiceProviderLayer() { }
@@ -49,26 +52,33 @@ public class ServiceProviderLayer {
 
     public ServiceProviderLayer getParent() { return parent; }
 
-    public Collection<ServiceProviderLayer> getAllLayers() { return allLayers; }
+    public Collection<ServiceProviderLayer> getLayers() { return allLayers; }
 
     public ServiceProviderLayer getLayer(String name) { return namedLayers.get(name); }
 
     public boolean containsLayer(String name) { return namedLayers.containsKey(name); }
 
-    public boolean containsService(String name) { return providers.containsKey(name); }
+    public boolean containsProvider(String name) { return providers.containsKey(name); }
 
-    public Collection<ServiceProviderMetadata> getAllServices() { return providers.values(); }
+    public Collection<ServiceProviderMetadata> getProviders() { return providers.values(); }
 
-    public Path getModulePath(String name) { return modulePath.getPathForModule(name); }
+    public Path getPath(String name) { return modulePath.getPathForModule(name); }
 
     public boolean isPublic() { return isPublic; }
 
     public void setPublic(boolean v) { isPublic = v; }
 
     public static ServiceProviderLayer getRootLayer() {
+        return getRootLayer(null);
+    }
+
+    public static ServiceProviderLayer getRootLayer(Reporter reporter) {
         if (rootLayer == null) {
             rootLayer = new ServiceProviderLayer();
             rootLayer.name = "root";
+            if (rootLayer != null) {
+                rootLayer.setReporter(reporter);
+            }
             ModuleLayer boot = ModuleLayer.boot();
             boot.modules().forEach((module) -> {
                 rootLayer.registerModule(module);
@@ -84,36 +94,69 @@ public class ServiceProviderLayer {
 
     /// Sets the reporter for communicating mapping warnings or errors.
     public ServiceProviderLayer setReporter(Reporter repoter) {
-        if (reporter == null) return this;
-        this.reporter = repoter;
-        this.ownsReporter = true;
+        if (reporter == null) {
+            reporter = new NoOpReporter();
+        } else {
+            this.reporter = repoter;
+            this.ownsReporter = true;
+        }
         return this;
     }
 
     @SuppressWarnings("unchecked")
     public <T> T loadProvider(Class<T> providerClass) {
         try {
-            Object object = providerClass.getDeclaredConstructor().newInstance();
-            return (T)object;
+            Constructor<?> constructor = providerClass.getDeclaredConstructor();
+            if (constructor == null) {
+                reporter.debug("No declared constructor for " + providerClass.getName());
+                throw new ServiceException("Class " + providerClass.getName() + " has no no-args constructor");
+            } else {
+                ServiceProvider instance = (ServiceProvider) constructor.newInstance();
+                return (T)instance;
+            }
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
                 | NoSuchMethodException e) {
             throw new ServiceException("Failed to instantiate class " + providerClass.getName() + ". Cause: " + e.getMessage(), e);
         }
     }
 
+    public Set<Class<ServiceProvider>> getServiceTypes() {
+        return metadataForServiceType.keySet();
+    }
+
+    public Set<Class<ServiceProvider>> findServiceTypes() {
+        Set<Class<ServiceProvider>> found = new HashSet<>();
+        found.addAll(getServiceTypes());
+        for (ServiceProviderLayer layer : allLayers) {
+            found.addAll(layer.findServiceTypes());
+        }
+        return found;
+    }
+
     public <T> ServiceProviderMetadata getProviderMetadata(String providerName) {
-        ServiceProviderMetadata meta = providers.get(providerName);
-        return meta;
+        return providers.get(providerName);
     }
 
-    public Collection<ServiceProviderMetadata> findProviders(Class<? extends ServiceProvider> serviceType) {
+    public List<ServiceProviderMetadata> getProviders(Class<? extends ServiceProvider> serviceType) {
+        List<ServiceProviderMetadata> found = new ArrayList<>();
+        if (metadataForServiceType.get(serviceType) != null) {
+            Set<ServiceProviderMetadata> set = metadataForServiceType.get(serviceType);
+            for (ServiceProviderMetadata item : set) {
+                reportFinding(item, 0);
+            }
+            found.addAll(set);
+        }
+        return found;
+    }
+
+    public List<ServiceProviderMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType) {
         String startLayer = (name == null ? "unnamed layer" : "layer " + name);
-        getReporter().debug("[ServiceProviderLayer] Searching for " + serviceType.getSimpleName() + " starting at " + startLayer);
-        return findProviders(serviceType, null);
+        getReporter().debug("Searching for " + serviceType.getSimpleName() + " starting at " + startLayer);
+        return findAllProviders(serviceType, null);
     }
 
-    private Collection<ServiceProviderMetadata> findProviders(Class<? extends ServiceProvider> serviceType, ServiceProviderLayer previous) {
-        Collection<ServiceProviderMetadata> found = new ArrayList<>();
+    private List<ServiceProviderMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType, ServiceProviderLayer previous) {
+        List<ServiceProviderMetadata> found = new ArrayList<>();
 
         if (metadataForServiceType.get(serviceType) != null) {
             Set<ServiceProviderMetadata> set = metadataForServiceType.get(serviceType);
@@ -124,7 +167,7 @@ public class ServiceProviderLayer {
         }
 
         if (parent == null) {
-            // Branch out from root. `previousa is used to avoid going down the branch we just came from
+            // Branch out from root. `previous` is used to avoid going down the branch we just came from
             for (ServiceProviderLayer layer : allLayers) {
                 if (layer != previous && layer.isPublic) {
                     found.addAll(layer.findProvidersInBranches(serviceType, 0));
@@ -132,16 +175,16 @@ public class ServiceProviderLayer {
             }
         } else {
             // Go towards root
-            getReporter().trace("[ServiceProviderLayer] ⬆ " + parent.name);
-            found.addAll(parent.findProviders(serviceType, this));
+            getReporter().trace("⬆ " + parent.name);
+            found.addAll(parent.findAllProviders(serviceType, this));
         }
 
         return found;
     }
 
-    private Collection<ServiceProviderMetadata> findProvidersInBranches(Class<? extends ServiceProvider> serviceType, int depth) {
-        Collection<ServiceProviderMetadata> found = new ArrayList<>();
-        getReporter().trace("[ServiceProviderLayer] " + "  ".repeat(depth) + "⬇ " + name);
+    private List<ServiceProviderMetadata> findProvidersInBranches(Class<? extends ServiceProvider> serviceType, int depth) {
+        List<ServiceProviderMetadata> found = new ArrayList<>();
+        getReporter().trace("" + "  ".repeat(depth) + "⬇ " + name);
 
         if (metadataForServiceType.get(serviceType) != null) {
             Set<ServiceProviderMetadata> set = metadataForServiceType.get(serviceType);
@@ -161,7 +204,7 @@ public class ServiceProviderLayer {
     }
 
     private void reportFinding(ServiceProviderMetadata item, int depth) {
-        getReporter().debug("[ServiceProviderLayer] [" + name + "] " + "  ".repeat(depth) + item.getType().getName() +
+        getReporter().debug("[" + name + "] " + "  ".repeat(depth) + item.getType().getName() +
                 (item.getLocation() == null ? "" : " from " + item.getLocation()));
     }
 
@@ -190,46 +233,65 @@ public class ServiceProviderLayer {
         return layer;
     }
 
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({ "rawtypes" })
     public void registerModule(Module module) {
         String moduleName = module.getName();
         if (moduleName.startsWith("java.") ||
             moduleName.startsWith("javax.") ||
             moduleName.startsWith("jdk.")) {
             // These modules will never contain a Cascara ServiceProvider
-            getReporter().debug("Module \"%s\" cannot contain Cascara ServiceProvider", moduleName);
+            getReporter().trace("Module \"%s\" cannot contain Cascara ServiceProvider", moduleName);
             return;
         }
+
         ClassLoader classLoader = module.getClassLoader();
         if (classLoader == null) {
-            getReporter().warn("Module \"%s\" has no ClassLoader", moduleName);
+            getReporter().error("Module \"%s\" has no ClassLoader", moduleName);
             return;
         }
+
         ModuleDescriptor desc = module.getDescriptor();
         for (Provides provides : desc.provides()) {
-            for (String provide : provides.providers()) {
+            for (String providerClassName : provides.providers()) {
                 try {
-                    getReporter().debug("[ServiceProviderLayer] Discovering providers in \"%s\"", moduleName);
-                    Class<?> type = classLoader.loadClass(provide);
+                    getReporter().debug("Discovering providers in \"%s\"", moduleName);
+                    Class<?> type = classLoader.loadClass(providerClassName);
                     registerClass((Class)type);
                 } catch (ClassNotFoundException | ServiceException e) {
-                    getReporter().warn("Failed to load class " + provide +". Cause: " + e.getMessage(), e);
+                    getReporter().warn("Failed to load class " + providerClassName +". Cause: " + e.getMessage(), e);
                 }
             }
         }
+
+        //
     }
 
     public void registerClass(Class<?> type) {
         if (type == null || !ServiceProvider.class.isAssignableFrom(type)) {
             return;
         }
-        try {
-            ServiceProvider instance = ServiceProvider.class.cast(type.getDeclaredConstructor().newInstance());
+        // try {
+            ServiceProvider instance = (ServiceProvider) loadProvider(type);
             registerProvider(instance, null);
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-                | NoSuchMethodException e) {
-            throw new ServiceException("Failed to register class " + type.getName() + ". Cause: " + e.getMessage(), e);
-        }
+            // Constructor<?> constructor = type.getDeclaredConstructor();
+            // if (constructor == null) {
+            //     reporter.debug("No declared constructor for " + type.getName());
+            //     Method instanceMethod = type.getDeclaredMethod("instance");
+            //     if (instanceMethod == null) {
+            //         reporter.error("No instance method for " + type.getName());
+            //         throw new ServiceException("Class " + type.getName() + " has no no-args constructor or static instance method");
+            //     } else {
+            //         ServiceProvider instance = (ServiceProvider) instanceMethod.invoke(null);
+            //         registerProvider(instance, null);
+            //     }
+            // } else {
+            //     ServiceProvider instance = (ServiceProvider) constructor.newInstance();
+            //     registerProvider(instance, null);
+            // }
+        // } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+        //         | NoSuchMethodException e) {
+        //     throw new ServiceException("Failed to register class " + type.getName() + ". Cause: " + e.getMessage(), e);
+        // }
     }
 
     public void registerJar(Path jarPath) {
@@ -248,7 +310,7 @@ public class ServiceProviderLayer {
             throw new ServiceException(message);
         }
 
-        getReporter().debug("[ServiceProviderLayer] Discovering providers in \"%s\"", jarPath);
+        getReporter().debug("Discovering providers in \"%s\"", jarPath);
 
         jarPaths.add(jarPath);
         String paths = String.join(":", getJarStrings());
@@ -292,21 +354,25 @@ public class ServiceProviderLayer {
         });
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     private void registerProvider(ServiceProvider provider, String location) {
         try {
             Class<?> providerClass = provider.getClass();
 
             List<Class<ServiceProvider>> interfaceHierarchy = new ArrayList<>();
+
             if (collectCascaraModuleInterfaces(providerClass, interfaceHierarchy)) {
 
                 String providerClassName = providerClass.getName();
                 Properties capabilities = provider.getCapabilities();
 
+                // System.out.println("  Valid: " + providerClassName);
+
                 capabilitiesForProvider.put(providerClassName, provider.getCapabilities());
 
                 ServiceProviderMetadata meta = new ServiceProviderMetadata();
 
-                meta.setType(provider.getClass());
+                meta.setType((Class)provider.getClass());
                 meta.setCapabilities(capabilities);
                 meta.setLocation(location);
                 providers.put(providerClassName, meta);
@@ -316,7 +382,7 @@ public class ServiceProviderLayer {
                     Set<ServiceProviderMetadata> metas = metadataForServiceType.get(interfaceType);
                     if (metas == null) {
                         metas = new HashSet<>();
-                        metadataForServiceType.put(interfaceType, metas);
+                        metadataForServiceType.put((Class)interfaceType, metas);
                     }
                     metas.add(meta);
                 }
@@ -335,17 +401,29 @@ public class ServiceProviderLayer {
         if (type.equals(ServiceProvider.class)) {
             return true;
         }
-        List<Class<?>> interfaces = List.of(type.getInterfaces());
+
+        // Check all interfaces
         boolean found = false;
+        List<Class<?>> interfaces = List.of(type.getInterfaces());
         for (Class<?> interfaceType : interfaces) {
             if (ServiceProvider.class.isAssignableFrom(interfaceType)) {
                 if (collectCascaraModuleInterfaces(interfaceType, collected)) {
                     collected.add((Class)interfaceType);
                     found = true;
                 }
-
             }
         }
+
+        // Check the superclass, if any
+        Class<?> superClass = type.getSuperclass();
+        if (superClass != null) {
+            if (ServiceProvider.class.isAssignableFrom(superClass)) {
+                if (collectCascaraModuleInterfaces(superClass, collected)) {
+                    found = true;
+                }
+            }
+        }
+
         return found;
     }
 

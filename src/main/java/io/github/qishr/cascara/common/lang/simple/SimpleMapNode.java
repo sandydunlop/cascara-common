@@ -67,6 +67,17 @@ public final class SimpleMapNode extends SimpleNode implements MapAstNode<Simple
         return false;
     }
 
+    public SimpleMapNode put2(String key, SimpleNode value) {
+        put(key, value);
+        return this;
+    }
+
+    public SimpleMapNode put2(String key, String value) {
+        SimpleScalarNode scalarValue = new SimpleScalarNode(value);
+        put(key, scalarValue);
+        return this;
+    }
+
     @Override
     public void put(String key, SimpleNode value) {
         for (SimpleMapEntryNode entry : entries) {

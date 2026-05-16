@@ -7,17 +7,17 @@ import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 
 public interface Reporter {
 
-    /// Creates a new `Reporter` with the current settings,
-    /// specifically for the specified class.
-    /// Typically used for global logging by modules.
-    Reporter forClass(Class<?> clazz);
+    // /// Creates a new `Reporter` with the current settings,
+    // /// specifically for the specified class.
+    // /// Typically used for global logging by modules.
+    // Reporter forClass(Class<?> clazz);
 
     /// Sets the level of output when logging directly to the console.
     Reporter setLevel(Level level);
 
     // Reporter setWriter(Writer writer);
 
-    Reporter setStringWriter(ReportStringWriter stringWriter);
+    // Reporter setStringWriter(ReportStringWriter stringWriter);
 
     Reporter setDiagnosticWriter(ReportDiagnosticWriter diagnosticWriter);
 

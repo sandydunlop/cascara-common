@@ -30,6 +30,7 @@ public class Diagnostic {
     public Exception getException() { return exception; }
 
     public enum Level {
+        DEFAULT(0),
         ERROR(1),
         WARNING(2),
         INFO(3),

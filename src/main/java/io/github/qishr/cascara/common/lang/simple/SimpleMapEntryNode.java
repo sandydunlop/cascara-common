@@ -14,6 +14,16 @@ public final class SimpleMapEntryNode extends SimpleNode implements MapEntryAstN
         this.value = value;
     }
 
+    public SimpleMapEntryNode(String key, SimpleNode value) {
+        this.key = new SimpleScalarNode(key);
+        this.value = value;
+    }
+
+    public SimpleMapEntryNode(String key, String value) {
+        this.key = new SimpleScalarNode(key);
+        this.value = new SimpleScalarNode(value);
+    }
+
     @Override
     public SimpleNode getKey() {
         return key;

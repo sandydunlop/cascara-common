@@ -13,20 +13,20 @@ public class NoOpReporter implements Reporter {
         // Nothing to see here
     }
 
-    @Override
-    public NoOpReporter forClass(Class<?> clazz) {
-        return this;
-    }
+    // @Override
+    // public NoOpReporter forClass(Class<?> clazz) {
+    //     return this;
+    // }
 
     @Override
     public NoOpReporter setLevel(Level level) {
         return this;
     }
 
-    @Override
-    public NoOpReporter setStringWriter(ReportStringWriter writer) {
-        return this;
-    }
+    // @Override
+    // public NoOpReporter setStringWriter(ReportStringWriter writer) {
+    //     return this;
+    // }
 
     @Override
     public NoOpReporter setDiagnosticWriter(ReportDiagnosticWriter logger) {

@@ -13,23 +13,19 @@ import java.util.Set;
 
 public class JarFile extends ArchiveFile {
     private Properties manifestProperties = new Properties();
-    private Properties mavenProperties = new Properties();
+    private Properties mavenProperties;
     private Set<String> packageNames = null;
     private Set<String> classNames = null;
     private String moduleName = null;
-    // File file = null;
 
     public static JarFile load(Path jarPath) throws IOException {
-        String jarManifest = new String(extractFile(jarPath, "META-INF/MANIFEST.MF"));
-        JarFile jar = new JarFile(jarPath);
-        jar.manifestProperties = JarManifest.parse(jarManifest);
-        jar.extractMavenInfo(); // TODO: Make this lazy
-        // jar.determineModuleName();
-        return jar;
+        return new JarFile(jarPath);
     }
 
-    private JarFile(Path vsixPath) throws IOException {
-        super(vsixPath);
+    private JarFile(Path jarPath) throws IOException {
+        super(jarPath);
+        String jarManifest = new String(extractFile("META-INF/MANIFEST.MF"));
+        manifestProperties = JarManifest.parse(jarManifest);
     }
 
     public Path getPath() {
@@ -40,7 +36,26 @@ public class JarFile extends ArchiveFile {
         return manifestProperties;
     }
 
+    // public List<List<String>> getServices() {
+    //     try {
+    //         List<List<String>> services = new ArrayList<>();
+    //         List<FileInfo> serviceFiles = listFiles("META-INF/services");
+    //         for (FileInfo serviceFile : serviceFiles) {
+    //             System.out.println("services: " + serviceFile.getPath());
+    //             String serviceFileContent = new String(extractFile(serviceFile.getPath()));
+    //             System.out.println("content: " + serviceFileContent);
+    //         }
+    //         return services;
+    //     } catch (IOException e) {
+    //         // e.printStackTrace();
+    //         return null;
+    //     }
+    // }
+
     public Properties getMavenProperties() {
+        if (mavenProperties == null) {
+            extractMavenInfo();
+        }
         return mavenProperties;
     }
 
@@ -75,6 +90,7 @@ public class JarFile extends ArchiveFile {
     }
 
     private void extractMavenInfo() {
+        mavenProperties = new Properties();
         String mavenPropertiesPath = getPomPropertiesPath();
         String mavenPropertiesString = new String(extractFile(mavenPropertiesPath));
         parseProperties(mavenPropertiesString, mavenProperties);
