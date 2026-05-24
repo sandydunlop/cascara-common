@@ -2,11 +2,19 @@ package io.github.qishr.cascara.common.diagnostic;
 
 import java.io.PrintStream;
 import java.net.URI;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 
-public class SimpleReporter implements Reporter {
+public class GlobalReporter implements Reporter {
+    private static final DateTimeFormatter TIME_FORMAT =
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+
+    private static GlobalReporter globalInstance;
+
+    private Class<?> clazz;
     private Level level = Level.INFO;
     private ReportStringWriter stringWriter;
     private ReportDiagnosticWriter diagnosticWriter;
@@ -14,41 +22,82 @@ public class SimpleReporter implements Reporter {
     private boolean disableSystemOutput = false;
     private boolean disableFlush = true;
 
-    public SimpleReporter(ReportStringWriter writer) {
-        this.stringWriter = writer;
+
+    // private GlobalReporter(ReportStringWriter writer) {
+    //     this.stringWriter = writer;
+    // }
+
+    private GlobalReporter(Class<?> clazz) {
+        this.clazz = clazz;
     }
 
-    public SimpleReporter() {
+    private GlobalReporter() {
         // Nothing to see here
     }
 
+    public static GlobalReporter globalInstance() {
+        if (globalInstance == null) {
+            globalInstance = new GlobalReporter();
+        }
+        return globalInstance;
+    }
+
+    public static GlobalReporter forClass(Class<?> clazz) {
+        globalInstance();
+        GlobalReporter reporter = new GlobalReporter(clazz);
+        return reporter;
+    }
+
     @Override
-    public SimpleReporter setLevel(Level level) {
+    public GlobalReporter setLevel(Level level) {
+        if (this != globalInstance) {
+            throw new UnsupportedOperationException("The method setLevel in GlobalReporter may only be called on the global instance.");
+        }
         this.level = level;
         return this;
     }
 
+    @Deprecated
+    public GlobalReporter setStringWriter(ReportStringWriter writer) {
+        throw new UnsupportedOperationException("The method setStringWriter is not longer available.");
+    }
+
     @Override
-    public SimpleReporter setDiagnosticWriter(ReportDiagnosticWriter writer) {
+    public GlobalReporter setDiagnosticWriter(ReportDiagnosticWriter writer) {
+        if (this != globalInstance) {
+            throw new UnsupportedOperationException("The method setDiagnosticWriter in GlobalReporter may only be called on the global instance.");
+        }
         this.diagnosticWriter = writer;
         return this;
     }
 
     @Override
-    public SimpleReporter setCollector(ReportCollector collector) {
+    public GlobalReporter setCollector(ReportCollector collector) {
+        if (this != globalInstance) {
+            throw new UnsupportedOperationException("The method setCollector in GlobalReporter may only be called on the global instance.");
+        }
         this.collector = collector;
         return this;
     }
 
-    public SimpleReporter setDisableSystemOutput(boolean b) {
-        this.disableSystemOutput = b;
+    public GlobalReporter setDisableSystemOutput(boolean b) {
+        if (this != globalInstance) {
+            throw new UnsupportedOperationException("The method setDisableSystemOutput in GlobalReporter may only be called on the global instance.");
+        }
+        globalInstance.disableSystemOutput = b;
         return this;
     }
 
-    public SimpleReporter setDisableFlush(boolean b) {
-        this.disableFlush = b;
+    public GlobalReporter setDisableFlush(boolean b) {
+        if (this != globalInstance) {
+            throw new UnsupportedOperationException("The method setDisableFlush in GlobalReporter may only be called on the global instance.");
+        }
+        globalInstance.disableFlush = b;
         return this;
     }
+
+
+
 
     /// Reports a trace message through the reporter.
     /// @param msg The message to report.
@@ -117,11 +166,11 @@ public class SimpleReporter implements Reporter {
     //
 
     private void report(Level level, int line, int column, URI uri, String message, Exception exception) {
-        if (collector == null || (level != Level.WARNING && level != Level.ERROR)) {
-            if (this.level.compareTo(level) >= 0) {
+        if (globalInstance.collector == null || (level != Level.WARNING && level != Level.ERROR)) {
+            if (globalInstance.level.compareTo(level) >= 0) {
                 writeString(level, line, column, uri, message, exception);
             }
-            if (this.diagnosticWriter != null) {
+            if (globalInstance.diagnosticWriter != null) {
                 writeDiagnostic(level, line, column, uri, message, exception);
             }
         } else {
@@ -130,38 +179,42 @@ public class SimpleReporter implements Reporter {
     }
 
     private void collect(Level level, int line, int column, URI uri, String message, Exception exception) {
-        Diagnostic diagnostic = new Diagnostic(null, level, message, line, column, uri, exception);
-        collector.collect(diagnostic);
+        Diagnostic diagnostic = new Diagnostic(clazz, level, message, line, column, uri, exception);
+        globalInstance.collector.collect(diagnostic);
     }
 
     private void writeDiagnostic(Level level, int line, int column, URI uri, String message, Exception exception) {
-        Diagnostic diagnostic = new Diagnostic(null, level, message, line, column, uri, exception);
-        diagnosticWriter.write(diagnostic);
+        Diagnostic diagnostic = new Diagnostic(clazz, level, message, line, column, uri, exception);
+        globalInstance.diagnosticWriter.write(diagnostic);
     }
 
     private void writeString(Level level, int line, int column, URI uri, String message, Exception exception) {
         // Write to console / writer
+        String timestamp = LocalDateTime.now().format(TIME_FORMAT);
+
         if (uri == null) {
-            writeString (level, "[" + level + "] " + message + "\n");
+            writeString (level, String.format("[%5s] [%s] [%s] %s\n", level, timestamp, clazz.getSimpleName(), message));
         } else {
             if (line > 0) {
-                writeString (level, "[" + level + "] " + message + " at " + uri + ":" + line + ":" + column+ "\n");
+                writeString (level, String.format("[%5s] [%s] [%s] %s at %s:%d\n", level, timestamp, clazz.getSimpleName(), message, uri, line));
+                // writeString (level, "[" + level + "] " + message + " at " + uri + ":" + line + ":" + column+ "\n");
             } else {
-                writeString (level, "[" + level + "] " + message + " in file: " + uri + "\n");
+                writeString (level, String.format("[%5s] [%s] [%s] %s in file %s\n", level, timestamp, clazz.getSimpleName(), message, uri));
+                // writeString (level, "[" + level + "] " + message + " in file: " + uri + "\n");
             }
         }
     }
 
     private void writeString(Level level, String text) {
         PrintStream console = level == Level.ERROR ? System.err : System.out;
-        if (!disableSystemOutput) {
+        if (!globalInstance.disableSystemOutput) {
             console.print(text);
             if (!disableFlush) {
                 console.flush();
             }
         }
-        if (stringWriter != null) {
-            stringWriter.write(text);
+        if (globalInstance.stringWriter != null) {
+            globalInstance.stringWriter.write(text);
         }
     }
 
