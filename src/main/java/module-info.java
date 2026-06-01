@@ -1,6 +1,4 @@
 module cascara.common {
-    requires java.net.http;
-
     uses io.github.qishr.cascara.common.service.ServiceProvider;
 
     exports io.github.qishr.cascara.common.lang.annotation;

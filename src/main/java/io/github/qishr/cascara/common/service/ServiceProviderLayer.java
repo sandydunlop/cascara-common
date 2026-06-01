@@ -59,9 +59,7 @@ public class ServiceProviderLayer {
         if (rootLayer == null) {
             rootLayer = new ServiceProviderLayer();
             rootLayer.name = "root";
-            if (rootLayer != null) {
-                rootLayer.setReporter(reporter);
-            }
+            rootLayer.setReporter(reporter);
             ModuleLayer boot = ModuleLayer.boot();
             boot.modules().forEach((module) -> {
                 rootLayer.registerModule(module);
@@ -159,11 +157,11 @@ public class ServiceProviderLayer {
     public void setPublic(boolean v) { isPublic = v; }
 
     /// Sets the reporter for communicating mapping warnings or errors in this layer.
-    public ServiceProviderLayer setReporter(Reporter repoter) {
+    public ServiceProviderLayer setReporter(Reporter reporter) {
         if (reporter == null) {
             reporter = new NoOpReporter();
         } else {
-            this.reporter = repoter;
+            this.reporter = reporter;
             this.ownsReporter = true;
         }
         return this;
@@ -311,7 +309,7 @@ public class ServiceProviderLayer {
         // 3. (re-)create the layer.
         moduleLayer = parent.defineModulesWithManyLoaders(cf, ClassLoader.getSystemClassLoader());
 
-        enumerateServices();
+        enumerateProviders();
     }
 
     //
@@ -325,28 +323,29 @@ public class ServiceProviderLayer {
     }
 
     /// Use SPI to find the service implementations inside this layer
-    private <P> void enumerateServices() {
+    private void enumerateProviders() {
         providers.clear();
         metadataForServiceType.clear();
         var loader = ServiceLoader.load(moduleLayer, ServiceProvider.class);
         loader.forEach(provider -> {
-            Path jarPath = modulePath.getPathForModule(provider.getClass().getModule().getName());
+            String moduleName = provider.getClass().getModule().getName();
+            Path jarPath = modulePath.getPathForModule(moduleName);
             try {
-                registerProvider(provider, jarPath.toString());
+                registerProvider(provider, jarPath);
             } catch (Exception e) {
-                registrationError("Failed to query module.", null, e);
+                registrationError("Failed to query module " + moduleName + ".", null, e);
             } catch(AbstractMethodError e) {
-                registrationError("Incompatible module.", jarPath.toString(), e);
+                registrationError("Incompatible module.", jarPath, e);
             } catch (NoClassDefFoundError e) {
-                registrationError("Incompatible module.", jarPath.toString(), e);
+                registrationError("Incompatible module.", jarPath, e);
             } catch (ServiceConfigurationError e) {
-                registrationError("Incompatible module.", jarPath.toString(), e);
+                registrationError("Incompatible module.", jarPath, e);
             }
         });
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private void registerProvider(ServiceProvider provider, String location) {
+    private void registerProvider(ServiceProvider provider, Path location) {
         getReporter().debug("Registering \"%s\"", provider.getClass().getName());
         try {
             Class<?> providerClass = provider.getClass();
@@ -364,7 +363,7 @@ public class ServiceProviderLayer {
 
                 meta.setType((Class)provider.getClass());
                 meta.setCapabilities(capabilities);
-                meta.setLocation(location);
+                meta.setLocation(location == null ? null : location.toString());
                 providers.put(providerClassName, meta);
 
                 for (Class<?> interfaceType : interfaceHierarchy) {
@@ -417,7 +416,7 @@ public class ServiceProviderLayer {
         return found;
     }
 
-    private void registrationError(String message, String location, Throwable t) {
+    private void registrationError(String message, Path location, Throwable t) {
         String logMessage = message;
         if (location != null) {
             logMessage = logMessage + " " + location;
