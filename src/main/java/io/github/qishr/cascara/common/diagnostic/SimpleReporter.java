@@ -36,16 +36,14 @@ public class SimpleReporter extends AbstractReporter<SimpleReporter> {
                     )
                 );
             } else {
-                if (diagnostic.getLine() > 0) {
-                    writeString (diagnostic.getLevel(),
-                        String.format(
-                            "[%5s] %s in file %s\n",
-                            diagnostic.getLevel(),
-                            diagnostic.getMessage(),
-                            diagnostic.getUri()
-                        )
-                    );
-                }
+                writeString (diagnostic.getLevel(),
+                    String.format(
+                        "[%5s] %s in file %s\n",
+                        diagnostic.getLevel(),
+                        diagnostic.getMessage(),
+                        diagnostic.getUri()
+                    )
+                );
             }
         }
     }

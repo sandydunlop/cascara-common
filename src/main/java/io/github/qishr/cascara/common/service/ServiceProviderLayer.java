@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import io.github.qishr.cascara.common.diagnostic.Reporter;
@@ -28,7 +29,7 @@ import io.github.qishr.cascara.common.util.Properties;
 public class ServiceProviderLayer {
     private static ServiceProviderLayer rootLayer;
 
-    private Reporter reporter = new NoOpReporter();
+    private Reporter reporter;
 
     private boolean ownsReporter = false;
 
@@ -39,39 +40,22 @@ public class ServiceProviderLayer {
     private ServiceProviderLayer parent;
 
     private List<Path> jarPaths = new ArrayList<>();
-    private List<ServiceProviderLayer> allLayers = new ArrayList<>();
-    private Map<String,ServiceProviderLayer> namedLayers = new HashMap<>();
+    private List<ServiceProviderLayer> children = new ArrayList<>();
+    private Map<String,ServiceProviderLayer> namedChildren = new HashMap<>();
     private Map<String,ServiceProviderMetadata> providers = new HashMap<>();
     private Map<Class<ServiceProvider>, Set<ServiceProviderMetadata>> metadataForServiceType = new HashMap<>();
     private Map<String, Properties> capabilitiesForProvider = new HashMap<>();
 
     private ServiceProviderLayer() { }
 
-    public String getName() { return name; }
-
-    public ServiceProviderLayer getParent() { return parent; }
-
-    public Collection<ServiceProviderLayer> getLayers() { return allLayers; }
-
-    public ServiceProviderLayer getLayer(String name) { return namedLayers.get(name); }
-
-    public boolean containsLayer(String name) { return namedLayers.containsKey(name); }
-
-    public boolean containsProvider(String name) { return providers.containsKey(name); }
-
-    public Collection<ServiceProviderMetadata> getProviders() { return providers.values(); }
-
-    public Path getPath(String name) { return modulePath.getPathForModule(name); }
-
-    public boolean isPublic() { return isPublic; }
-
-    public void setPublic(boolean v) { isPublic = v; }
-
     public static ServiceProviderLayer getRootLayer() {
         return getRootLayer(null);
     }
 
     public static ServiceProviderLayer getRootLayer(Reporter reporter) {
+        if (reporter == null) {
+            reporter = new NoOpReporter();
+        }
         if (rootLayer == null) {
             rootLayer = new ServiceProviderLayer();
             rootLayer.name = "root";
@@ -84,22 +68,6 @@ public class ServiceProviderLayer {
             });
         }
         return rootLayer;
-    }
-
-    public Reporter getReporter() {
-        if (ownsReporter || parent == null) { return reporter; }
-        return parent.getReporter();
-    }
-
-    /// Sets the reporter for communicating mapping warnings or errors.
-    public ServiceProviderLayer setReporter(Reporter repoter) {
-        if (reporter == null) {
-            reporter = new NoOpReporter();
-        } else {
-            this.reporter = repoter;
-            this.ownsReporter = true;
-        }
-        return this;
     }
 
     @SuppressWarnings("unchecked")
@@ -122,6 +90,14 @@ public class ServiceProviderLayer {
         }
     }
 
+    public static <T> T loadProvider(Class<T> serviceType, ServiceProviderMetadata metadata) {
+        if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
+            throw new ServiceException("\"" + serviceType + "\" is not a ServiceProvider.");
+        }
+        Class<? extends ServiceProvider> clazz = metadata.getType();
+        return serviceType.cast(loadProvider(clazz));
+    }
+
     // TODO: Don't just pick the first one, pick one that's declared in a Cascara module
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <T> T loadDefault(Class<T> serviceType) {
@@ -133,27 +109,77 @@ public class ServiceProviderLayer {
             throw new ServiceException("No providers registered for " + serviceType.getSimpleName());
         }
         ServiceProviderMetadata meta = providers.getFirst();
-        Class<ServiceProvider> clazz = meta.getType();
-        return (T)loadProvider(clazz);
+        Class<T> clazz = (Class<T> )meta.getType();
+        return loadProvider(clazz);
     }
 
-    public Set<Class<ServiceProvider>> getServiceTypes() {
-        return metadataForServiceType.keySet();
-    }
+    //
+    // All Layers - TODO: These should be cached
+    //
 
+    /// Returns a list of all known service types.
     public Set<Class<ServiceProvider>> findServiceTypes() {
         Set<Class<ServiceProvider>> found = new HashSet<>();
         found.addAll(getServiceTypes());
-        for (ServiceProviderLayer layer : allLayers) {
+        for (ServiceProviderLayer layer : children) {
             found.addAll(layer.findServiceTypes());
         }
         return found;
     }
 
+    /// Returns a list of all known providers of the specified service type.
+    public List<ServiceProviderMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType) {
+        String startLayer = (name == null ? "unnamed layer" : "layer " + name);
+        getReporter().debug("Searching for " + serviceType.getSimpleName() + " starting at " + startLayer);
+        return findAllProviders(serviceType, null);
+    }
+
+    //
+    // This Layer
+    //
+
+    public String getName() { return name; }
+
+    public ServiceProviderLayer getParent() { return parent; }
+
+    public Collection<ServiceProviderLayer> getChildren() { return children; }
+
+    public ServiceProviderLayer getChild(String name) { return namedChildren.get(name); }
+
+    public boolean hasChild(String name) { return namedChildren.containsKey(name); }
+
+    public boolean hasProvider(String name) { return providers.containsKey(name); }
+
+    public Collection<ServiceProviderMetadata> getProviders() { return providers.values(); }
+
+    public Path getModulePath(String name) { return modulePath.getPathForModule(name); }
+
+    public boolean isPublic() { return isPublic; }
+
+    public void setPublic(boolean v) { isPublic = v; }
+
+    /// Sets the reporter for communicating mapping warnings or errors in this layer.
+    public ServiceProviderLayer setReporter(Reporter repoter) {
+        if (reporter == null) {
+            reporter = new NoOpReporter();
+        } else {
+            this.reporter = repoter;
+            this.ownsReporter = true;
+        }
+        return this;
+    }
+
+    /// Returns a list of service types in this layer.
+    public Set<Class<ServiceProvider>> getServiceTypes() {
+        return metadataForServiceType.keySet();
+    }
+
+    /// Returns a metadata for the sprcified provider if it exists in this layer.
     public ServiceProviderMetadata getProviderMetadata(String providerName) {
         return providers.get(providerName);
     }
 
+    /// Retrieves metadata of providers of the specified service type in this layer.
     public List<ServiceProviderMetadata> getProviders(Class<? extends ServiceProvider> serviceType) {
         List<ServiceProviderMetadata> found = new ArrayList<>();
         if (metadataForServiceType.get(serviceType) != null) {
@@ -166,74 +192,24 @@ public class ServiceProviderLayer {
         return found;
     }
 
-    public List<ServiceProviderMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType) {
-        String startLayer = (name == null ? "unnamed layer" : "layer " + name);
-        getReporter().debug("Searching for " + serviceType.getSimpleName() + " starting at " + startLayer);
-        return findAllProviders(serviceType, null);
-    }
-
-    private List<ServiceProviderMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType, ServiceProviderLayer previous) {
+    /// Retrieves metadata of providers in this layer whose capabilities satisfy the given predicate.
+    public List<ServiceProviderMetadata> getProviders(Class<? extends ServiceProvider> serviceType, Predicate<Properties> capabilityPredicate) {
         List<ServiceProviderMetadata> found = new ArrayList<>();
-
         if (metadataForServiceType.get(serviceType) != null) {
             Set<ServiceProviderMetadata> set = metadataForServiceType.get(serviceType);
-            for (ServiceProviderMetadata item : set) {
-                reportFinding(item, 0);
-            }
-            found.addAll(set);
-        }
-
-        if (parent == null) {
-            // Branch out from root. `previous` is used to avoid going down the branch we just came from
-            for (ServiceProviderLayer layer : allLayers) {
-                if (layer != previous && layer.isPublic) {
-                    found.addAll(layer.findProvidersInBranches(serviceType, 0));
+            for (ServiceProviderMetadata provider : set) {
+                if (capabilityPredicate.test(provider.getCapabilities())) {
+                    found.add(provider);
+                    reportFinding(provider, 0);
                 }
             }
-        } else {
-            // Go towards root
-            getReporter().trace("⬆ " + parent.name);
-            found.addAll(parent.findAllProviders(serviceType, this));
         }
-
         return found;
     }
 
-    private List<ServiceProviderMetadata> findProvidersInBranches(Class<? extends ServiceProvider> serviceType, int depth) {
-        List<ServiceProviderMetadata> found = new ArrayList<>();
-        getReporter().trace("" + "  ".repeat(depth) + "⬇ " + name);
-
-        if (metadataForServiceType.get(serviceType) != null) {
-            Set<ServiceProviderMetadata> set = metadataForServiceType.get(serviceType);
-            for (ServiceProviderMetadata item : set) {
-                reportFinding(item, depth);
-            }
-            found.addAll(set);
-        }
-
-        for (ServiceProviderLayer layer : allLayers) {
-            if (layer.isPublic) {
-                found.addAll(layer.findProvidersInBranches(serviceType, depth + 1));
-            }
-        }
-
-        return found;
-    }
-
-    private void reportFinding(ServiceProviderMetadata item, int depth) {
-        getReporter().debug("[" + name + "] " + "  ".repeat(depth) + item.getType().getName() +
-                (item.getLocation() == null ? "" : " from " + item.getLocation()));
-    }
-
-    public void remove(String layerName) {
-        for (ServiceProviderLayer layer : allLayers) {
-            if (layer.getName().equals(layerName)) {
-                allLayers.remove(layer);
-                namedLayers.remove(layerName);
-                return;
-            }
-        }
-    }
+    //
+    // Registration
+    //
 
     public ServiceProviderLayer create() {
         return create(null);
@@ -242,12 +218,22 @@ public class ServiceProviderLayer {
     public ServiceProviderLayer create(String name) {
         ServiceProviderLayer layer = new ServiceProviderLayer();
         layer.parent = this;
-        allLayers.add(layer);
+        children.add(layer);
         if (name != null) {
             layer.name = name;
-            namedLayers.put(name, layer);
+            namedChildren.put(name, layer);
         }
         return layer;
+    }
+
+    public void remove(String layerName) {
+        for (ServiceProviderLayer layer : children) {
+            if (layer.getName().equals(layerName)) {
+                children.remove(layer);
+                namedChildren.remove(layerName);
+                return;
+            }
+        }
     }
 
     @SuppressWarnings({ "rawtypes" })
@@ -262,7 +248,7 @@ public class ServiceProviderLayer {
 
         ClassLoader classLoader = module.getClassLoader();
         if (classLoader == null) {
-            getReporter().error("Module \"%s\" has no ClassLoader.", moduleName);
+            getReporter().error(null, "Module \"%s\" has no ClassLoader.", moduleName);
             return;
         }
 
@@ -273,7 +259,7 @@ public class ServiceProviderLayer {
                     Class<?> type = classLoader.loadClass(providerClassName);
                     registerClass((Class)type);
                 } catch (ClassNotFoundException | ServiceException e) {
-                    getReporter().warn("Failed to load class " + providerClassName +". Cause: " + e.getMessage(), e);
+                    getReporter().warn(null, "Failed to load class " + providerClassName +". Cause: " + e.getMessage(), e);
                 }
             }
         }
@@ -326,6 +312,16 @@ public class ServiceProviderLayer {
         moduleLayer = parent.defineModulesWithManyLoaders(cf, ClassLoader.getSystemClassLoader());
 
         enumerateServices();
+    }
+
+    //
+    // Private Methods
+    //
+
+    /// Returns the Reporter of this layer or the nearest ancetor that has one.
+    private Reporter getReporter() {
+        if (ownsReporter || parent == null) { return reporter; }
+        return parent.getReporter();
     }
 
     /// Use SPI to find the service implementations inside this layer
@@ -429,7 +425,7 @@ public class ServiceProviderLayer {
         if (t != null) {
             logMessage = logMessage + " " + t.getMessage();
         }
-        getReporter().error(logMessage);
+        getReporter().error(null, logMessage);
     }
 
     private Path[] getJarPaths() {
@@ -442,5 +438,58 @@ public class ServiceProviderLayer {
             strings[i] = jarPaths.get(i).toString();
         }
         return strings;
+    }
+
+    private List<ServiceProviderMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType, ServiceProviderLayer previous) {
+        List<ServiceProviderMetadata> found = new ArrayList<>();
+
+        if (metadataForServiceType.get(serviceType) != null) {
+            Set<ServiceProviderMetadata> set = metadataForServiceType.get(serviceType);
+            for (ServiceProviderMetadata item : set) {
+                reportFinding(item, 0);
+            }
+            found.addAll(set);
+        }
+
+        if (parent == null) {
+            // Branch out from root. `previous` is used to avoid going down the branch we just came from
+            for (ServiceProviderLayer layer : children) {
+                if (layer != previous && layer.isPublic) {
+                    found.addAll(layer.findProvidersInBranches(serviceType, 0));
+                }
+            }
+        } else {
+            // Go towards root
+            getReporter().trace("⬆ " + parent.name);
+            found.addAll(parent.findAllProviders(serviceType, this));
+        }
+
+        return found;
+    }
+
+    private List<ServiceProviderMetadata> findProvidersInBranches(Class<? extends ServiceProvider> serviceType, int depth) {
+        List<ServiceProviderMetadata> found = new ArrayList<>();
+        getReporter().trace("" + "  ".repeat(depth) + "⬇ " + name);
+
+        if (metadataForServiceType.get(serviceType) != null) {
+            Set<ServiceProviderMetadata> set = metadataForServiceType.get(serviceType);
+            for (ServiceProviderMetadata item : set) {
+                reportFinding(item, depth);
+            }
+            found.addAll(set);
+        }
+
+        for (ServiceProviderLayer layer : children) {
+            if (layer.isPublic) {
+                found.addAll(layer.findProvidersInBranches(serviceType, depth + 1));
+            }
+        }
+
+        return found;
+    }
+
+    private void reportFinding(ServiceProviderMetadata item, int depth) {
+        getReporter().debug("[" + name + "] " + "  ".repeat(depth) + item.getType().getName() +
+                (item.getLocation() == null ? "" : " from " + item.getLocation()));
     }
 }

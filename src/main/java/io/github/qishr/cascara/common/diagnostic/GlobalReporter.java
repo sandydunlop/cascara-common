@@ -104,8 +104,8 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                 String.format(
                     "[%5s] [%s] [%s] %s\n",
                     diagnostic.getLevel(),
-                    diagnostic.getTime().format(TIME_FORMAT),
-                    diagnostic.getClazz(),
+                    diagnostic.getTimestamp().format(TIME_FORMAT),
+                    diagnostic.getSource(),
                     diagnostic.getMessage()
                 )
             );
@@ -115,26 +115,24 @@ public class GlobalReporter extends AbstractReporter<GlobalReporter> {
                     String.format(
                         "[%5s] [%s] [%s] %s at %s:%d\n",
                         diagnostic.getLevel(),
-                        diagnostic.getTime().format(TIME_FORMAT),
-                        diagnostic.getClazz(),
+                        diagnostic.getTimestamp().format(TIME_FORMAT),
+                        diagnostic.getSource(),
                         diagnostic.getMessage(),
                         diagnostic.getUri(),
                         diagnostic.getLine()
                     )
                 );
             } else {
-                if (diagnostic.getLine() > 0) {
-                    writeString (diagnostic.getLevel(),
-                        String.format(
-                            "[%5s] [%s] [%s] %s in file %s\n",
-                            diagnostic.getLevel(),
-                            diagnostic.getTime().format(TIME_FORMAT),
-                            diagnostic.getClazz(),
-                            diagnostic.getMessage(),
-                            diagnostic.getUri()
-                        )
-                    );
-                }
+                writeString (diagnostic.getLevel(),
+                    String.format(
+                        "[%5s] [%s] [%s] %s in file %s\n",
+                        diagnostic.getLevel(),
+                        diagnostic.getTimestamp().format(TIME_FORMAT),
+                        diagnostic.getSource(),
+                        diagnostic.getMessage(),
+                        diagnostic.getUri()
+                    )
+                );
             }
         }
     }

@@ -3,8 +3,7 @@ package io.github.qishr.cascara.common.service;
 import io.github.qishr.cascara.common.util.Properties;
 
 public class ServiceProviderMetadata {
-    private Class<ServiceProvider> type;
-    // private Object instance;
+    private Class<? extends ServiceProvider> type;
     private Properties capabilities;
     private String location;
 
@@ -26,7 +25,7 @@ public class ServiceProviderMetadata {
         return type.getName();
     }
 
-    public Class<ServiceProvider> getType() {
+    public Class<? extends ServiceProvider> getType() {
         return type;
     }
 

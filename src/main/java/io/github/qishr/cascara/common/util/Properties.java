@@ -6,6 +6,10 @@ import java.util.List;
 public class Properties {
     List<Property> propertiesList = new ArrayList<>();
 
+    public boolean containsKey(String k) {
+        return null != get(k);
+    }
+
     public Property get(String k) {
         List<Property> copy = new ArrayList<>(propertiesList);
         for (Property prop : copy) {

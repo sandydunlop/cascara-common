@@ -1,9 +1,6 @@
 module cascara.common {
     requires java.net.http;
 
-    uses io.github.qishr.cascara.common.lang.processor.AstConverter;
-    uses io.github.qishr.cascara.common.lang.processor.Emitter;
-    uses io.github.qishr.cascara.common.lang.processor.Parser;
     uses io.github.qishr.cascara.common.service.ServiceProvider;
 
     exports io.github.qishr.cascara.common.lang.annotation;
@@ -18,7 +15,14 @@ module cascara.common {
     exports io.github.qishr.cascara.common.semver;
     exports io.github.qishr.cascara.common.service;
     exports io.github.qishr.cascara.common.spi;
+    exports io.github.qishr.cascara.common.type;
     exports io.github.qishr.cascara.common.util;
 
     opens io.github.qishr.cascara.common.util;
+
+    provides io.github.qishr.cascara.common.type.TypeDescriptor
+        with io.github.qishr.cascara.common.type.LocalDateTimeDescriptor,
+             io.github.qishr.cascara.common.type.UriTypeDescriptor,
+             io.github.qishr.cascara.common.type.PathTypeDescriptor;
+
 }

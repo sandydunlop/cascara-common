@@ -53,35 +53,48 @@ public class NoOpReporter implements Reporter {
     public void info(String format, Object... args) {}
 
     @Override
-    public void warn(String format, Object... args) {}
+    public void warn(String code, String format, Object... args) {}
 
     @Override
-    public void error(String format, Object... args) {}
+    public void error(String code, String format, Object... args) {}
 
     //
     // With Location
     //
 
     @Override
-    public void infoAt(int start, int end, int line, int column, URI uri, String format, Object... args) {}
+    public void infoAt(URI uri, int line, int column, String format, Object... args) {}
 
     @Override
-    public void warnAt(int start, int end, int line, int column, URI uri, String format, Object... args) {}
+    public void warnAt(URI uri, int line, int column, String code, String format, Object... args) {}
 
     @Override
-    public void errorAt(int start, int end, int line, int column, URI uri, String format, Object... args) {}
+    public void errorAt(URI uri, int line, int column, String code, String format, Object... args) {}
+
+    //
+    // With Location invluding offset
+    //
+
+    @Override
+    public void infoAt(URI uri, int line, int column, int start, int end, String format, Object... args) {}
+
+    @Override
+    public void warnAt(URI uri, int line, int column, int start, int end, String code, String format, Object... args) {}
+
+    @Override
+    public void errorAt(URI uri, int line, int column, int start, int end, String code, String format, Object... args) {}
 
     //
     // With Token
     //
 
     @Override
-    public void infoAt(Token token, URI uri, String format, Object... args) {}
+    public void infoAt(URI uri, Token token, String format, Object... args) {}
 
     @Override
-    public void warnAt(Token token, URI uri, String format, Object... args) {}
+    public void warnAt(URI uri, Token token, String code, String format, Object... args) {}
 
     @Override
-    public void errorAt(Token token, URI uri, String format, Object... args) {}
+    public void errorAt(URI uri, Token token, String code, String format, Object... args) {}
 
 }
