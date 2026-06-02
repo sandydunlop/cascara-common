@@ -14,5 +14,5 @@ public interface AstNode {
     List<? extends AstNode> getChildren();
     List<CommentAstNode> getComments();
     default Token getToken() { return null; }
-    default String getString() { return ""; }
+    default String asString() { return ""; }
 }

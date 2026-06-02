@@ -46,7 +46,7 @@ public final class SimpleMapNode extends SimpleNode implements MapAstNode<Simple
     public SimpleMapNode put(SimpleNode key, SimpleNode value) {
         for (SimpleMapEntryNode entry : entries) {
             if (entry.getKey().equals(key)) {
-                entry.setValue(value);
+                entry.setRaw(value);
                 return this;
             }
         }
@@ -62,7 +62,7 @@ public final class SimpleMapNode extends SimpleNode implements MapAstNode<Simple
     @Override
     public boolean containsKey(String key) {
         for (SimpleMapEntryNode entry : entries) {
-            if (entry.getKey() instanceof SimpleScalarNode scalar && key.equals(scalar.getString())) {
+            if (entry.getKey() instanceof SimpleScalarNode scalar && key.equals(scalar.asString())) {
                 return true;
             }
         }
@@ -81,8 +81,8 @@ public final class SimpleMapNode extends SimpleNode implements MapAstNode<Simple
         for (SimpleMapEntryNode entry : entries) {
             SimpleNode kNode = entry.getKey();
             // Check if the existing key's string value matches the requested key
-            if (kNode instanceof SimpleScalarNode scalar && key.equals(scalar.getString())) {
-                entry.setValue(value);
+            if (kNode instanceof SimpleScalarNode scalar && key.equals(scalar.asString())) {
+                entry.setRaw(value);
                 return this;
             }
         }
@@ -98,7 +98,7 @@ public final class SimpleMapNode extends SimpleNode implements MapAstNode<Simple
         while (it.hasNext()) {
             SimpleMapEntryNode entry = it.next();
             AstNode k = entry.getKey();
-            if (k instanceof ScalarAstNode scalar && scalar.getString().equals(key)) {
+            if (k instanceof ScalarAstNode scalar && scalar.asString().equals(key)) {
                 it.remove();
                 return;
             }
@@ -112,7 +112,7 @@ public final class SimpleMapNode extends SimpleNode implements MapAstNode<Simple
             SimpleNode kNode = entry.getKey();
             String entryKey = null;
             if (kNode instanceof SimpleScalarNode scalar) {
-                entryKey = scalar.getString();
+                entryKey = scalar.asString();
             } else {
                 entryKey = kNode.toString();
             }

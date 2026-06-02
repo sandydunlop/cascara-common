@@ -28,7 +28,7 @@ public class AstUtil {
                 }
             }
         } else if (ast instanceof ScalarAstNode astScalar) {
-            System.out.println("  ".repeat(depth) + "ScalarAstNode: " + astScalar.getString());
+            System.out.println("  ".repeat(depth) + "ScalarAstNode: " + astScalar.asString());
         } else if (ast instanceof MapEntryAstNode astMapEntry) {
             System.out.println("  ".repeat(depth) + "MapEntryAstNode:");
             System.out.println("  ".repeat(depth) + "  Key:");

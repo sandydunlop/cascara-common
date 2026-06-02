@@ -35,7 +35,7 @@ public final class SimpleMapEntryNode extends SimpleNode implements MapEntryAstN
     }
 
     @Override
-    public void setValue(SimpleNode value) {
+    public void setRaw(SimpleNode value) {
         this.value = value;
     }
 
