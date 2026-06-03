@@ -18,7 +18,7 @@ public interface Reporter {
     Reporter setDiagnosticCollector(Consumer<Diagnostic> collector);
 
     /// Registers a specialized collector to receive only problem-level diagnostics.
-    /// This collector is filtered to intercept only [Level.WARN] and [Level.ERROR] items.
+    /// This collector is filtered to intercept only `Level.WARN` and `Level.ERROR` items.
     ///
     /// @param collector The consumer that processes problem [Diagnostic] objects.
     Reporter setProblemCollector(Consumer<Diagnostic> collector);

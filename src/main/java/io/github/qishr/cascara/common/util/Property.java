@@ -58,11 +58,11 @@ public class Property {
         kind = Kind.NUMBER;
     }
 
-    public double getDouble() {
-        return getDouble(-1);
+    public double asDouble() {
+        return asDouble(-1);
     }
 
-    public double getDouble(double defaultValue) {
+    public double asDouble(double defaultValue) {
         try {
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
@@ -70,19 +70,19 @@ public class Property {
         }
     }
 
-    public int getInt() {
-        return getInt(-1);
+    public int asInt() {
+        return asInt(-1);
     }
 
-    public long getLong() {
-        return getLong(-1);
+    public long asLong() {
+        return asLong(-1);
     }
 
-    public int getInt(int defaultValue) {
-        return (int) getLong(defaultValue);
+    public int asInt(int defaultValue) {
+        return (int) asLong(defaultValue);
     }
 
-    public long getLong(int defaultValue) {
+    public long asLong(int defaultValue) {
         try {
             return Long.parseLong(value);
         } catch (NumberFormatException e) {
@@ -94,11 +94,11 @@ public class Property {
         return defaultValue;
     }
 
-    public boolean getBoolean() {
-        return getBoolean(false);
+    public boolean asBoolean() {
+        return asBoolean(false);
     }
 
-    public boolean getBoolean(boolean defaultValue) {
+    public boolean asBoolean(boolean defaultValue) {
         if (value == null || value.isBlank()) {
             return defaultValue;
         }

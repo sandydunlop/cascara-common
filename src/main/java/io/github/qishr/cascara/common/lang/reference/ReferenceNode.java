@@ -1,11 +1,11 @@
-package io.github.qishr.cascara.common.lang.simple;
+package io.github.qishr.cascara.common.lang.reference;
 
 import io.github.qishr.cascara.common.lang.ast.*;
 import io.github.qishr.cascara.common.lang.token.Token;
 
 import java.net.URI;
 
-public abstract class SimpleNode implements AstNode {
+public abstract class ReferenceNode implements AstNode {
     @Override
     public int getStartLine() { return 0; }
     @Override

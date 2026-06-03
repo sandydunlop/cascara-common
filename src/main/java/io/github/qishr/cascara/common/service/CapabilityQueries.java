@@ -17,6 +17,7 @@ public class CapabilityQueries {
     }
 
     /// Combines multiple capability predicates using logical AND (All must match)
+    /// @return predicate
     @SafeVarargs
     public static Predicate<Properties> allOf(Predicate<Properties>... predicates) {
         Predicate<Properties> result = props -> true;

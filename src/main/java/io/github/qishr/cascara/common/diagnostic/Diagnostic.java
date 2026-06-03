@@ -30,7 +30,7 @@ public class Diagnostic {
     /// Constructs a fully qualified [Diagnostic] entry with absolute location indicators.
     ///
     /// The [thread] and [timestamp] properties are implicitly initialized at the moment
-    /// of construction using [Thread.currentThread] and [LocalDateTime.now] respectively.
+    /// of construction using `Thread.currentThread` and `LocalDateTime.now` respectively.
     ///
     /// @param uri The URI identifying the originating source resource.
     /// @param line The 1-based line number where the diagnostic is anchored.

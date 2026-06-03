@@ -1,16 +1,16 @@
-package io.github.qishr.cascara.common.lang.simple;
+package io.github.qishr.cascara.common.lang.reference;
 
 import io.github.qishr.cascara.common.lang.QuoteStyle;
 import io.github.qishr.cascara.common.lang.ast.*;
 import java.util.Collections;
 import java.util.List;
 
-public final class SimpleScalarNode extends SimpleNode implements ScalarAstNode<SimpleNode> {
+public final class ReferenceScalarNode extends ReferenceNode implements ScalarAstNode<ReferenceNode> {
 
     private Object value;
     private QuoteStyle quoteStyle = QuoteStyle.PLAIN;
 
-    public SimpleScalarNode(Object value) {
+    public ReferenceScalarNode(Object value) {
         this.value = value;
     }
 

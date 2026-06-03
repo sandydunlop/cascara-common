@@ -1,4 +1,4 @@
-package io.github.qishr.cascara.common.lang.simple;
+package io.github.qishr.cascara.common.lang.reference;
 
 import java.net.URI;
 import java.util.List;
@@ -6,17 +6,17 @@ import java.util.List;
 import io.github.qishr.cascara.common.lang.StructuredDocument;
 import io.github.qishr.cascara.common.lang.ast.*;
 
-public final class SimpleDocument extends SimpleNode implements StructuredDocument {
+public final class ReferenceDocument extends ReferenceNode implements StructuredDocument {
     private URI originUri;
     private URI schemaUri;
 
-    private final SimpleMapNode root;
+    private final ReferenceMapNode root;
 
-    public SimpleDocument(SimpleMapNode root) {
+    public ReferenceDocument(ReferenceMapNode root) {
         this.root = root;
     }
 
-    public SimpleMapNode getRoot() {
+    public ReferenceMapNode getRoot() {
         return root;
     }
 
@@ -38,7 +38,7 @@ public final class SimpleDocument extends SimpleNode implements StructuredDocume
         return root.getMap(key);
     }
 
-    public SimpleSequenceNode getSequence(String key) {
+    public ReferenceSequenceNode getSequence(String key) {
         return root.getSequence(key);
     }
 
