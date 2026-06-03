@@ -1,6 +1,11 @@
 package io.github.qishr.cascara.common.util;
 
-public class Property {
+import java.util.HashMap;
+import java.util.Map;
+
+import io.github.qishr.cascara.common.data.TableData;
+
+public class Property implements TableData {
     Kind kind = Kind.STRING;
     String key;
     String value = null;
@@ -115,4 +120,29 @@ public class Property {
         NUMBER,
         BOOLEAN
     }
+
+	@Override
+	public Object[] getValues() {
+        return new Object[]{key, value};
+	}
+
+	@Override
+	public Map<String, Object> getValuesMap() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", key); // TODO: Make these constants
+        map.put("value", value);
+        return map;
+	}
+
+	@Override
+	public Object get(String key) {
+        if (key == null) return null;
+        if (key.equals("name")) {
+            return this.key;
+        }
+        if (key.equals("value")) {
+            return this.value;
+        }
+        return null;
+	}
 }

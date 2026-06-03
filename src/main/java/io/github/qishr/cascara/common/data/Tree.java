@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
 
+import io.github.qishr.cascara.common.util.Properties;
+import io.github.qishr.cascara.common.util.Property;
+
 public class Tree<T extends TreeData<T,V>,V> {
     private static final String NL = "\n";
     private static final int TAB_SIZE = 2;
@@ -45,15 +48,25 @@ public class Tree<T extends TreeData<T,V>,V> {
     /// Renders TreeData.getValue()
     private void renderValue(Writer writer, V value, int indent) throws IOException {
         if (value instanceof List list && !list.isEmpty()) {
-            if (list.getFirst() instanceof TableData firstRow) {
+            Object firstElement = list.getFirst();
+            if (firstElement instanceof TableData firstRow) {
                 @SuppressWarnings("unchecked")
 				List<TableData> rows = list;
-                renderTable(writer, firstRow.getValuesMap().values().size(), rows, indent);
+                int columnCount = firstRow.getValuesMap().values().size();
+                renderTable(writer, columnCount, rows, indent);
+            } else {
+                System.err.println("[Tree] Unhandled list type: " + firstElement.getClass().getSimpleName());
             }
+        } else if (value instanceof Properties properties) {
+            List<Property> rows = properties.asList();
+            int columnCount = 2;
+            renderTable(writer, columnCount, rows, indent);
+        } else {
+            System.err.println("[Tree] Unhandled value type: " + value.getClass().getSimpleName());
         }
     }
 
-    private void renderTable(Writer writer, int columns, List<TableData> rows, int indent) throws IOException {
+    private void renderTable(Writer writer, int columns, List<? extends TableData> rows, int indent) throws IOException {
         Table table = new Table();
         table.setShowHeaders(false);
 

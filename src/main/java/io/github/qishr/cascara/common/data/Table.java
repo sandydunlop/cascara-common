@@ -114,7 +114,7 @@ public class Table {
             }
             writer.write("|\n");
         }
-        writer.write("\n\n");
+        // writer.write("\n\n");
         writer.flush();
     }
 }
