@@ -1,21 +1,17 @@
-package io.github.qishr.cascara.common.data.reference;
+package io.github.qishr.cascara.common.data;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import io.github.qishr.cascara.common.data.TableData;
-import io.github.qishr.cascara.common.data.TreeData;
-
-/// A reference implementation of TreeData
-public class ReferenceTreeData implements TreeData<ReferenceTreeData,List<TableData>> {
+public class SimpleTreeNode implements TreeData<SimpleTreeNode,List<TableData>> {
 
     private String name;
-    private List<ReferenceTreeData> children = new ArrayList<>();
-    private ReferenceTreeData parent;
+    private List<SimpleTreeNode> children = new ArrayList<>();
+    private SimpleTreeNode parent;
     private List<TableData> value;
 
-    public ReferenceTreeData(String name) {
+    public SimpleTreeNode(String name) {
         this.name = name;
     }
 
@@ -25,24 +21,18 @@ public class ReferenceTreeData implements TreeData<ReferenceTreeData,List<TableD
     }
 
 	@Override
-	public List<ReferenceTreeData> getChildren() {
+	public List<SimpleTreeNode> getChildren() {
         return children;
 	}
 
 	@Override
-	public ReferenceTreeData getParent() {
+	public SimpleTreeNode getParent() {
         return parent;
 	}
 
 	@Override
-	public void setParent(ReferenceTreeData parent) {
+	public void setParent(SimpleTreeNode parent) {
         this.parent = parent;
-	}
-
-	@Override
-	public Object[] getValues() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'getValues'");
 	}
 
 	@Override
@@ -62,8 +52,9 @@ public class ReferenceTreeData implements TreeData<ReferenceTreeData,List<TableD
         return value;
 	}
 
-    public ReferenceTreeData setValue(List<TableData> data) {
+    public SimpleTreeNode setValue(List<TableData> data) {
         value = data;
         return this;
     }
+
 }

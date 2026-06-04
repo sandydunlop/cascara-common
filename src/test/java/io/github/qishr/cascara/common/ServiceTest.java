@@ -9,7 +9,7 @@ import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.SimpleReporter;
 import io.github.qishr.cascara.common.diagnostic.Diagnostic.Level;
 import io.github.qishr.cascara.common.service.ServiceProviderLayer;
-import io.github.qishr.cascara.common.service.ServiceProviderMetadata;
+import io.github.qishr.cascara.common.service.ServiceMetadata;
 
 public class ServiceTest {
     @Disabled
@@ -22,7 +22,7 @@ public class ServiceTest {
 
         layer.registerJar(jarPath);
 
-        for (ServiceProviderMetadata provider : layer.getProviders()) {
+        for (ServiceMetadata provider : layer.getProvidersByFqcn()) {
             System.out.println(provider.getTitle());
         }
     }

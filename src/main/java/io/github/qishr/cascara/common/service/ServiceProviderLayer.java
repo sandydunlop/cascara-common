@@ -25,6 +25,7 @@ import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.ModulePath;
 import io.github.qishr.cascara.common.util.Properties;
+import io.github.qishr.cascara.common.util.Property;
 
 public class ServiceProviderLayer {
     private static ServiceProviderLayer rootLayer;
@@ -42,16 +43,23 @@ public class ServiceProviderLayer {
     private List<Path> jarPaths = new ArrayList<>();
     private List<ServiceProviderLayer> children = new ArrayList<>();
     private Map<String,ServiceProviderLayer> namedChildren = new HashMap<>();
-    private Map<String,ServiceProviderMetadata> providers = new HashMap<>();
-    private Map<Class<ServiceProvider>, Set<ServiceProviderMetadata>> metadataForServiceType = new HashMap<>();
-    private Map<String, Properties> capabilitiesForProvider = new HashMap<>();
+
+    private Map<String,ServiceMetadata> providersByFqcn = new HashMap<>();
+    private Map<String,ServiceMetadata> servicesByFqcn = new HashMap<>();
+    private Map<Class<ServiceProvider>, Set<ServiceMetadata>> providersByServiceType = new HashMap<>();
+    // private Map<String, Properties> providerPropertiesByFqcn = new HashMap<>();
 
     private ServiceProviderLayer() { }
 
+    /// Retrieves the root Service Provider Layer.
+    /// On the initial call, the root layer will be configured.
     public static ServiceProviderLayer getRootLayer() {
         return getRootLayer(null);
     }
 
+    /// Retrieves the root Service Provider Layer.
+    /// On the initial call, the root layer will be configured with a specified Reporter.
+    /// This reporter is used for non-fatal error and warning reporting.
     public static ServiceProviderLayer getRootLayer(Reporter reporter) {
         if (reporter == null) {
             reporter = new NoOpReporter();
@@ -88,7 +96,7 @@ public class ServiceProviderLayer {
         }
     }
 
-    public static <T> T loadProvider(Class<T> serviceType, ServiceProviderMetadata metadata) {
+    public static <T> T loadProvider(Class<T> serviceType, ServiceMetadata metadata) {
         if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
             throw new ServiceException("\"" + serviceType + "\" is not a ServiceProvider.");
         }
@@ -102,11 +110,11 @@ public class ServiceProviderLayer {
         if (!ServiceProvider.class.isAssignableFrom(serviceType)) {
             throw new ServiceException("\"" + serviceType + "\" is not a ServiceProvider.");
         }
-        List<ServiceProviderMetadata> providers = getRootLayer().findAllProviders((Class)serviceType);
+        List<ServiceMetadata> providers = getRootLayer().findAllProviders((Class)serviceType);
         if (providers.isEmpty()) {
             throw new ServiceException("No providers registered for " + serviceType.getSimpleName());
         }
-        ServiceProviderMetadata meta = providers.getFirst();
+        ServiceMetadata meta = providers.getFirst();
         Class<T> clazz = (Class<T> )meta.getType();
         return loadProvider(clazz);
     }
@@ -125,12 +133,23 @@ public class ServiceProviderLayer {
         return found;
     }
 
+    public Set<ServiceMetadata> findServices() {
+        Set<ServiceMetadata> found = new HashSet<>();
+        found.addAll(getServices());
+        for (ServiceProviderLayer layer : children) {
+            found.addAll(layer.findServices());
+        }
+        return found;
+    }
+
     /// Returns a list of all known providers of the specified service type.
-    public List<ServiceProviderMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType) {
+    public List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType) {
         String startLayer = (name == null ? "unnamed layer" : "layer " + name);
         getReporter().debug("Searching for " + serviceType.getSimpleName() + " starting at " + startLayer);
         return findAllProviders(serviceType, null);
     }
+
+    // TODO: A method like the above that takes a Predicate like getProviders does.
 
     //
     // This Layer
@@ -146,9 +165,9 @@ public class ServiceProviderLayer {
 
     public boolean hasChild(String name) { return namedChildren.containsKey(name); }
 
-    public boolean hasProvider(String name) { return providers.containsKey(name); }
+    public boolean hasProvider(String name) { return providersByFqcn.containsKey(name); }
 
-    public Collection<ServiceProviderMetadata> getProviders() { return providers.values(); }
+    public Collection<ServiceMetadata> getProvidersByFqcn() { return providersByFqcn.values(); }
 
     public Path getModulePath(String name) { return modulePath.getPathForModule(name); }
 
@@ -167,22 +186,22 @@ public class ServiceProviderLayer {
         return this;
     }
 
-    /// Returns a list of service types in this layer.
-    public Set<Class<ServiceProvider>> getServiceTypes() {
-        return metadataForServiceType.keySet();
-    }
-
-    /// Returns a metadata for the sprcified provider if it exists in this layer.
-    public ServiceProviderMetadata getProviderMetadata(String providerName) {
-        return providers.get(providerName);
+    /// Returns metadata for the sprcified provider if it exists in this layer.
+    public ServiceMetadata getProvider(String providerName) {
+        return providersByFqcn.get(providerName);
     }
 
     /// Retrieves metadata of providers of the specified service type in this layer.
-    public List<ServiceProviderMetadata> getProviders(Class<? extends ServiceProvider> serviceType) {
-        List<ServiceProviderMetadata> found = new ArrayList<>();
-        if (metadataForServiceType.get(serviceType) != null) {
-            Set<ServiceProviderMetadata> set = metadataForServiceType.get(serviceType);
-            for (ServiceProviderMetadata item : set) {
+    public Collection<ServiceMetadata> getProviders() {
+        return providersByFqcn.values();
+    }
+
+    /// Retrieves metadata of providers of the specified service type in this layer.
+    public List<ServiceMetadata> getProviders(Class<? extends ServiceProvider> serviceType) {
+        List<ServiceMetadata> found = new ArrayList<>();
+        if (providersByServiceType.get(serviceType) != null) {
+            Set<ServiceMetadata> set = providersByServiceType.get(serviceType);
+            for (ServiceMetadata item : set) {
                 reportFinding(item, 0);
             }
             found.addAll(set);
@@ -191,12 +210,12 @@ public class ServiceProviderLayer {
     }
 
     /// Retrieves metadata of providers in this layer whose capabilities satisfy the given predicate.
-    public List<ServiceProviderMetadata> getProviders(Class<? extends ServiceProvider> serviceType, Predicate<Properties> capabilityPredicate) {
-        List<ServiceProviderMetadata> found = new ArrayList<>();
-        if (metadataForServiceType.get(serviceType) != null) {
-            Set<ServiceProviderMetadata> set = metadataForServiceType.get(serviceType);
-            for (ServiceProviderMetadata provider : set) {
-                if (capabilityPredicate.test(provider.getCapabilities())) {
+    public List<ServiceMetadata> getProviders(Class<? extends ServiceProvider> serviceType, Predicate<Properties> capabilityPredicate) {
+        List<ServiceMetadata> found = new ArrayList<>();
+        if (providersByServiceType.get(serviceType) != null) {
+            Set<ServiceMetadata> set = providersByServiceType.get(serviceType);
+            for (ServiceMetadata provider : set) {
+                if (capabilityPredicate.test(provider.getProperties())) {
                     found.add(provider);
                     reportFinding(provider, 0);
                 }
@@ -261,8 +280,6 @@ public class ServiceProviderLayer {
                 }
             }
         }
-
-        //
     }
 
     public void registerClass(Class<?> type) {
@@ -324,8 +341,8 @@ public class ServiceProviderLayer {
 
     /// Use SPI to find the service implementations inside this layer
     private void enumerateProviders() {
-        providers.clear();
-        metadataForServiceType.clear();
+        providersByFqcn.clear();
+        providersByServiceType.clear();
         var loader = ServiceLoader.load(moduleLayer, ServiceProvider.class);
         loader.forEach(provider -> {
             String moduleName = provider.getClass().getModule().getName();
@@ -344,44 +361,72 @@ public class ServiceProviderLayer {
         });
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private void registerProvider(ServiceProvider provider, Path location) {
-        getReporter().debug("Registering \"%s\"", provider.getClass().getName());
+    private void registerProvider(ServiceProvider instance, Path jarPath) {
+        getReporter().debug("Registering \"%s\"", instance.getClass().getName());
         try {
-            Class<?> providerClass = provider.getClass();
+            Class<? extends ServiceProvider> providerClass = instance.getClass();
 
             List<Class<ServiceProvider>> interfaceHierarchy = new ArrayList<>();
 
             if (collectCascaraModuleInterfaces(providerClass, interfaceHierarchy)) {
+                ServiceMetadata provider = new ServiceMetadata(providerClass, getProviderProperties(instance, jarPath));
 
-                String providerClassName = providerClass.getName();
-                Properties capabilities = provider.getCapabilities();
+                providersByFqcn.put(providerClass.getName(), provider);
 
-                capabilitiesForProvider.put(providerClassName, provider.getCapabilities());
+                for (Class<ServiceProvider> serviceInterface : interfaceHierarchy) {
 
-                ServiceProviderMetadata meta = new ServiceProviderMetadata();
+                    ServiceMetadata service = new ServiceMetadata(serviceInterface, getServiceProperties(serviceInterface));
+                    servicesByFqcn.put(serviceInterface.getName(), service);
 
-                meta.setType((Class)provider.getClass());
-                meta.setCapabilities(capabilities);
-                meta.setLocation(location == null ? null : location.toString());
-                providers.put(providerClassName, meta);
-
-                for (Class<?> interfaceType : interfaceHierarchy) {
-
-                    Set<ServiceProviderMetadata> metas = metadataForServiceType.get(interfaceType);
-                    if (metas == null) {
-                        metas = new HashSet<>();
-                        metadataForServiceType.put((Class)interfaceType, metas);
+                    Set<ServiceMetadata> providers = providersByServiceType.get(serviceInterface);
+                    if (providers == null) {
+                        providers = new HashSet<>();
+                        providersByServiceType.put(serviceInterface, providers);
                     }
-                    metas.add(meta);
+                    providers.add(provider);
                 }
             }
         } catch(AbstractMethodError e) {
-            registrationError("Incompatible module: " + provider.getClass().getName() + ".", location, e);
+            registrationError("Incompatible module: " + instance.getClass().getName() + ".", jarPath, e);
         } catch (NoClassDefFoundError e) {
-            registrationError("Incompatible module: " + provider.getClass().getName() + ".", location, e);
+            registrationError("Incompatible module: " + instance.getClass().getName() + ".", jarPath, e);
         } catch (ServiceConfigurationError e) {
-            registrationError("Incompatible module: " + provider.getClass().getName() + ".", location, e);
+            registrationError("Incompatible module: " + instance.getClass().getName() + ".", jarPath, e);
+        }
+    }
+
+    private Properties getServiceProperties(Class<ServiceProvider> serviceInterface) {
+        Properties properties = new Properties();
+        setModuleProperties(properties, serviceInterface);
+        properties.set("serviceName", serviceInterface.getSimpleName());
+        return properties;
+    }
+
+    private Properties getProviderProperties(ServiceProvider provider, Path jarPath) {
+        Properties properties = new Properties();
+        setModuleProperties(properties, provider.getClass());
+        if (jarPath != null) {
+            properties.set("jarPath", jarPath.toString());
+        }
+        properties.set("providerName", provider.getClass().getSimpleName());
+        Properties declaredCapabilities = provider.getServiceProperties();
+        if (declaredCapabilities != null) {
+            for (Property p : declaredCapabilities.asList()) {
+                System.out.println("Prop: " + p.getKey() + " = " + p.getValue());
+            }
+            properties.addAll(declaredCapabilities);
+        }
+        return properties;
+    }
+
+    private void setModuleProperties(Properties properties, Class<?> type) {
+        Module module = type.getModule();
+        properties.set("moduleName", module.getName());
+        ModuleDescriptor descriptor = module.getDescriptor();
+        if (descriptor != null) {
+            descriptor.rawVersion().ifPresent(moduleVersion -> {
+                properties.set("moduleVersion", moduleVersion);
+            });
         }
     }
 
@@ -439,12 +484,12 @@ public class ServiceProviderLayer {
         return strings;
     }
 
-    private List<ServiceProviderMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType, ServiceProviderLayer previous) {
-        List<ServiceProviderMetadata> found = new ArrayList<>();
+    private List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType, ServiceProviderLayer previous) {
+        List<ServiceMetadata> found = new ArrayList<>();
 
-        if (metadataForServiceType.get(serviceType) != null) {
-            Set<ServiceProviderMetadata> set = metadataForServiceType.get(serviceType);
-            for (ServiceProviderMetadata item : set) {
+        if (providersByServiceType.get(serviceType) != null) {
+            Set<ServiceMetadata> set = providersByServiceType.get(serviceType);
+            for (ServiceMetadata item : set) {
                 reportFinding(item, 0);
             }
             found.addAll(set);
@@ -457,7 +502,7 @@ public class ServiceProviderLayer {
                     found.addAll(layer.findProvidersInBranches(serviceType, 0));
                 }
             }
-        } else {
+        } else if (parent != previous) {
             // Go towards root
             getReporter().trace("⬆ " + parent.name);
             found.addAll(parent.findAllProviders(serviceType, this));
@@ -466,13 +511,13 @@ public class ServiceProviderLayer {
         return found;
     }
 
-    private List<ServiceProviderMetadata> findProvidersInBranches(Class<? extends ServiceProvider> serviceType, int depth) {
-        List<ServiceProviderMetadata> found = new ArrayList<>();
+    private List<ServiceMetadata> findProvidersInBranches(Class<? extends ServiceProvider> serviceType, int depth) {
+        List<ServiceMetadata> found = new ArrayList<>();
         getReporter().trace("" + "  ".repeat(depth) + "⬇ " + name);
 
-        if (metadataForServiceType.get(serviceType) != null) {
-            Set<ServiceProviderMetadata> set = metadataForServiceType.get(serviceType);
-            for (ServiceProviderMetadata item : set) {
+        if (providersByServiceType.get(serviceType) != null) {
+            Set<ServiceMetadata> set = providersByServiceType.get(serviceType);
+            for (ServiceMetadata item : set) {
                 reportFinding(item, depth);
             }
             found.addAll(set);
@@ -487,8 +532,17 @@ public class ServiceProviderLayer {
         return found;
     }
 
-    private void reportFinding(ServiceProviderMetadata item, int depth) {
+    /// Returns a list of service types in this layer.
+    private Collection<Class<ServiceProvider>> getServiceTypes() {
+        return providersByServiceType.keySet();
+    }
+
+    private Collection<ServiceMetadata> getServices() {
+        return servicesByFqcn.values();
+    }
+
+    private void reportFinding(ServiceMetadata item, int depth) {
         getReporter().debug("[" + name + "] " + "  ".repeat(depth) + item.getType().getName() +
-                (item.getLocation() == null ? "" : " from " + item.getLocation()));
+                (item.getJarPath() == null ? "" : " from " + item.getJarPath()));
     }
 }

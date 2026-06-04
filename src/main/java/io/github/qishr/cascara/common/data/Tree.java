@@ -36,8 +36,8 @@ public class Tree<T extends TreeData<T,V>,V> {
         writer.write(node.getNodeName());
         writer.write(NL);
 
-        if (renderValues && node.getPhysicalValue() != null) {
-            renderValue(writer, node.getPhysicalValue(), indent + 1);
+        if (renderValues && node.getPayload() != null) {
+            renderValue(writer, node.getPayload(), indent + 1);
         }
 
         for (TreeData<T,V> child : node.getChildren()) {
