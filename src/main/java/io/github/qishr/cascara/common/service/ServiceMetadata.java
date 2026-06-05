@@ -1,6 +1,5 @@
 package io.github.qishr.cascara.common.service;
 
-import io.github.qishr.cascara.common.lang.AbstractPrimitive;
 import io.github.qishr.cascara.common.util.Properties;
 
 public class ServiceMetadata {

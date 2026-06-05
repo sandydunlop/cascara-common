@@ -25,7 +25,6 @@ import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.util.JarFile;
 import io.github.qishr.cascara.common.util.ModulePath;
 import io.github.qishr.cascara.common.util.Properties;
-import io.github.qishr.cascara.common.util.Property;
 
 public class ServiceProviderLayer {
     private static ServiceProviderLayer rootLayer;
@@ -142,14 +141,19 @@ public class ServiceProviderLayer {
         return found;
     }
 
-    /// Returns a list of all known providers of the specified service type.
+    /// Retrieves metadata of all known providers of the specified service type.
     public List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType) {
         String startLayer = (name == null ? "unnamed layer" : "layer " + name);
         getReporter().debug("Searching for " + serviceType.getSimpleName() + " starting at " + startLayer);
-        return findAllProviders(serviceType, null);
+        return internalFindAllProviders(serviceType, null, null);
     }
 
-    // TODO: A method like the above that takes a Predicate like getProviders does.
+    /// Retrieves metadata of all known providers whose capabilities satisfy the given predicate.
+    public List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<Properties> capabilityPredicate) {
+        String startLayer = (name == null ? "unnamed layer" : "layer " + name);
+        getReporter().debug("Searching for " + serviceType.getSimpleName() + " starting at " + startLayer);
+        return internalFindAllProviders(serviceType, capabilityPredicate, null);
+    }
 
     //
     // This Layer
@@ -186,7 +190,7 @@ public class ServiceProviderLayer {
         return this;
     }
 
-    /// Returns metadata for the sprcified provider if it exists in this layer.
+    /// Retrieves metadata of the sprcified provider if it exists in this layer.
     public ServiceMetadata getProvider(String providerName) {
         return providersByFqcn.get(providerName);
     }
@@ -411,9 +415,6 @@ public class ServiceProviderLayer {
         properties.set("providerName", provider.getClass().getSimpleName());
         Properties declaredCapabilities = provider.getServiceProperties();
         if (declaredCapabilities != null) {
-            for (Property p : declaredCapabilities.asList()) {
-                System.out.println("Prop: " + p.getKey() + " = " + p.getValue());
-            }
             properties.addAll(declaredCapabilities);
         }
         return properties;
@@ -484,48 +485,62 @@ public class ServiceProviderLayer {
         return strings;
     }
 
-    private List<ServiceMetadata> findAllProviders(Class<? extends ServiceProvider> serviceType, ServiceProviderLayer previous) {
+    private List<ServiceMetadata> internalFindAllProviders(Class<? extends ServiceProvider> serviceType, Predicate<Properties> capabilityPredicate, ServiceProviderLayer previous) {
         List<ServiceMetadata> found = new ArrayList<>();
 
         if (providersByServiceType.get(serviceType) != null) {
             Set<ServiceMetadata> set = providersByServiceType.get(serviceType);
-            for (ServiceMetadata item : set) {
-                reportFinding(item, 0);
+            for (ServiceMetadata provider : set) {
+                if (capabilityPredicate == null) {
+                    found.add(provider);
+                    reportFinding(provider, 0);
+                } else {
+                    if (capabilityPredicate.test(provider.getProperties())) {
+                        found.add(provider);
+                        reportFinding(provider, 0);
+                    }
+                }
             }
-            found.addAll(set);
         }
 
         if (parent == null) {
             // Branch out from root. `previous` is used to avoid going down the branch we just came from
             for (ServiceProviderLayer layer : children) {
                 if (layer != previous && layer.isPublic) {
-                    found.addAll(layer.findProvidersInBranches(serviceType, 0));
+                    found.addAll(layer.findProvidersInBranches(serviceType, capabilityPredicate, 0));
                 }
             }
         } else if (parent != previous) {
             // Go towards root
             getReporter().trace("⬆ " + parent.name);
-            found.addAll(parent.findAllProviders(serviceType, this));
+            found.addAll(parent.internalFindAllProviders(serviceType, capabilityPredicate, this));
         }
 
         return found;
     }
 
-    private List<ServiceMetadata> findProvidersInBranches(Class<? extends ServiceProvider> serviceType, int depth) {
+    private List<ServiceMetadata> findProvidersInBranches(Class<? extends ServiceProvider> serviceType, Predicate<Properties> capabilityPredicate, int depth) {
         List<ServiceMetadata> found = new ArrayList<>();
         getReporter().trace("" + "  ".repeat(depth) + "⬇ " + name);
 
         if (providersByServiceType.get(serviceType) != null) {
             Set<ServiceMetadata> set = providersByServiceType.get(serviceType);
-            for (ServiceMetadata item : set) {
-                reportFinding(item, depth);
+            for (ServiceMetadata provider : set) {
+                if (capabilityPredicate == null) {
+                    found.add(provider);
+                    reportFinding(provider, depth);
+                } else {
+                    if (capabilityPredicate.test(provider.getProperties())) {
+                        found.add(provider);
+                        reportFinding(provider, depth);
+                    }
+                }
             }
-            found.addAll(set);
         }
 
         for (ServiceProviderLayer layer : children) {
             if (layer.isPublic) {
-                found.addAll(layer.findProvidersInBranches(serviceType, depth + 1));
+                found.addAll(layer.findProvidersInBranches(serviceType, capabilityPredicate, depth + 1));
             }
         }
 
