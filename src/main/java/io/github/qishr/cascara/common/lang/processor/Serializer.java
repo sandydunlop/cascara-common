@@ -2,6 +2,7 @@ package io.github.qishr.cascara.common.lang.processor;
 
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.exception.SerializerException;
+import io.github.qishr.cascara.common.type.TypeDescriptor;
 
 /// Handles the transformation between Java Objects (POJOs) and the AST or textual formats.
 ///
@@ -44,4 +45,6 @@ public interface Serializer<A extends AstNode> extends Processor {
     /// @return A populated instance of the requested class.
     /// @throws SerializerException If the AST structure does not match the target type.
     <C> C fromAst(A astNode, Class<C> clazz);
+
+    void registerTypeDescriptor(TypeDescriptor typeDescriptor);
 }

@@ -7,8 +7,10 @@ public abstract class AbstractTypeDescriptor implements TypeDescriptor {
     protected static final String FORMAT_KEYWORD = "format";
 
     private Properties properties = new Properties();
+    private Class<?> type;
 
     protected AbstractTypeDescriptor(Class<?> type, String schemaType, String format) {
+        this.type = type;
         properties.set("javaType", type.getName());
         if (schemaType != null && !schemaType.isEmpty()) {
             properties.set("schemaType", schemaType);
@@ -20,5 +22,9 @@ public abstract class AbstractTypeDescriptor implements TypeDescriptor {
 
     public Properties getServiceProperties() {
         return properties;
+    }
+
+    public Class<?> getType() {
+        return type;
     }
 }

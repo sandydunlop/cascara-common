@@ -3,12 +3,12 @@ package io.github.qishr.cascara.common.type;
 import java.time.LocalDateTime;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 
-public class LocalDateTimeDescriptor extends AbstractTypeDescriptor {
+public class LocalDateTimeTypeDescriptor extends AbstractTypeDescriptor {
 
     public static final String FORMAT = "date-time";
     public static final String SCHEMA_TYPE = "string";
 
-    public LocalDateTimeDescriptor() {
+    public LocalDateTimeTypeDescriptor() {
         super(LocalDateTime.class, SCHEMA_TYPE, FORMAT);
     }
 

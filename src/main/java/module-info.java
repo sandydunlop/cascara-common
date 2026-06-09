@@ -4,6 +4,7 @@ module cascara.common {
     exports io.github.qishr.cascara.common.data;
     exports io.github.qishr.cascara.common.data.reference;
     exports io.github.qishr.cascara.common.diagnostic;
+    exports io.github.qishr.cascara.common.diagnostic.code;
     exports io.github.qishr.cascara.common.lang;
     exports io.github.qishr.cascara.common.lang.annotation;
     exports io.github.qishr.cascara.common.lang.ast;
@@ -22,7 +23,7 @@ module cascara.common {
 
     provides io.github.qishr.cascara.common.type.TypeDescriptor
         with io.github.qishr.cascara.common.type.InstantTypeDescriptor,
-             io.github.qishr.cascara.common.type.LocalDateTimeDescriptor,
+             io.github.qishr.cascara.common.type.LocalDateTimeTypeDescriptor,
              io.github.qishr.cascara.common.type.PathTypeDescriptor,
              io.github.qishr.cascara.common.type.UriTypeDescriptor,
              io.github.qishr.cascara.common.type.UuidTypeDescriptor;

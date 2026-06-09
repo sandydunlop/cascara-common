@@ -10,4 +10,5 @@ public interface TypeDescriptor extends ServiceProvider {
     Object toType(String string);
     String toText(Object object);
 
+    Class<?> getType();
 }
