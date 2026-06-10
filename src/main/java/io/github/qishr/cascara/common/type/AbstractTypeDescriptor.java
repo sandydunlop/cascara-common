@@ -3,28 +3,20 @@ package io.github.qishr.cascara.common.type;
 import io.github.qishr.cascara.common.util.Properties;
 
 public abstract class AbstractTypeDescriptor implements TypeDescriptor {
-    protected static final String TYPE_KEYWORD = "type";
-    protected static final String FORMAT_KEYWORD = "format";
+    protected Properties properties = new Properties();
 
-    private Properties properties = new Properties();
-    private Class<?> type;
+    private Class<?> javaType;
 
-    protected AbstractTypeDescriptor(Class<?> type, String schemaType, String format) {
-        this.type = type;
+    protected AbstractTypeDescriptor(Class<?> type) {
+        this.javaType = type;
         properties.set("javaType", type.getName());
-        if (schemaType != null && !schemaType.isEmpty()) {
-            properties.set("schemaType", schemaType);
-        }
-        if (format != null && !format.isEmpty()) {
-            properties.set("schemaFormat", format);
-        }
     }
 
     public Properties getServiceProperties() {
         return properties;
     }
 
-    public Class<?> getType() {
-        return type;
+    public Class<?> getJavaType() {
+        return javaType;
     }
 }

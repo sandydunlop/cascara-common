@@ -96,33 +96,33 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     //
 
     @Override
-    public void trace(String message, Object... args) {
-        report(buildDiagnostic(source, Level.TRACE, message, args));
+    public void trace(String message, Object... details) {
+        report(buildDiagnostic(source, Level.TRACE, message, details));
     }
 
     @Override
-    public void debug(String message, Object... args) {
-        report(buildDiagnostic(source, Level.DEBUG, message, args));
+    public void debug(String message, Object... details) {
+        report(buildDiagnostic(source, Level.DEBUG, message, details));
     }
 
     @Override
-    public void info(DiagnosticCode code, Object... args) {
-        report(buildDiagnostic(source, Level.INFO, null, code, args));
+    public void info(DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(source, Level.INFO, null, code, details));
     }
 
     @Override
-    public void warn(DiagnosticCode code, Object... args) {
-        report(buildDiagnostic(source, Level.WARN, null, code, args));
+    public void warn(DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(source, Level.WARN, null, code, details));
     }
 
     @Override
-    public void error(DiagnosticCode code, Object... args) {
-        report(buildDiagnostic(source, Level.ERROR, null, code, args));
+    public void error(DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(source, Level.ERROR, null, code, details));
     }
 
     @Override
-    public void error(Throwable cause, DiagnosticCode code, Object... args) {
-        report(buildDiagnostic(source, Level.ERROR, cause, code, args));
+    public void error(Throwable cause, DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(source, Level.ERROR, cause, code, details));
     }
 
     //
@@ -130,42 +130,42 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     //
 
     @Override
-    public void infoAt(int line, int column, DiagnosticCode code, Object... args) {
+    public void infoAt(int line, int column, DiagnosticCode code, Object... details) {
         report(buildDiagnostic(
             null, line, column,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
-            source, Level.INFO, null, code, args
+            source, Level.INFO, null, code, details
         ));
     }
 
     @Override
-    public void warnAt(int line, int column, DiagnosticCode code, Object... args) {
+    public void warnAt(int line, int column, DiagnosticCode code, Object... details) {
         report(buildDiagnostic(
             null, line, column,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
-            source, Level.WARN, null, code, args
+            source, Level.WARN, null, code, details
         ));
     }
 
     @Override
-    public void errorAt(int line, int column, DiagnosticCode code, Object... args) {
+    public void errorAt(int line, int column, DiagnosticCode code, Object... details) {
         report(buildDiagnostic(
             null, line, column,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
-            source, Level.ERROR, null, code, args
+            source, Level.ERROR, null, code, details
         ));
     }
 
     @Override
-    public void errorAt(int line, int column, Throwable cause, DiagnosticCode code, Object... args) {
+    public void errorAt(int line, int column, Throwable cause, DiagnosticCode code, Object... details) {
         report(buildDiagnostic(
             null, line, column,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
-            source, Level.ERROR, cause, code, args
+            source, Level.ERROR, cause, code, details
         ));
     }
 
@@ -174,23 +174,23 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     //
 
     @Override
-    public void infoAt(int line, int column, int start, int end, DiagnosticCode code, Object... args) {
-        report(buildDiagnostic(null, line, column, start, end, source, Level.INFO, null, code, null, args));
+    public void infoAt(int line, int column, int startOffset, int endOffset, DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(null, line, column, startOffset, endOffset, source, Level.INFO, null, code, null, details));
     }
 
     @Override
-    public void warnAt(int line, int column, int start, int end, DiagnosticCode code, Object... args) {
-        report(buildDiagnostic(null, line, column, start, end, source, Level.WARN, null, code, null, args));
+    public void warnAt(int line, int column, int startOffset, int endOffset, DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(null, line, column, startOffset, endOffset, source, Level.WARN, null, code, null, details));
     }
 
     @Override
-    public void errorAt(int line, int column, int start, int end, DiagnosticCode code, Object... args) {
-        report(buildDiagnostic(null, line, column, start, end, source, Level.ERROR, null, code, args));
+    public void errorAt(int line, int column, int startOffset, int endOffset, DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(null, line, column, startOffset, endOffset, source, Level.ERROR, null, code, details));
     }
 
     @Override
-    public void errorAt(int line, int column, int start, int end, Throwable cause, DiagnosticCode code, Object... args) {
-        report(buildDiagnostic(null, line, column, start, end, source, Level.ERROR, cause, code, args));
+    public void errorAt(int line, int column, int startOffset, int endOffset, Throwable cause, DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(null, line, column, startOffset, endOffset, source, Level.ERROR, cause, code, details));
     }
 
     //
@@ -198,23 +198,23 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     //
 
     @Override
-    public void infoAt(Token token, DiagnosticCode code, Object... args) {
-        report(buildDiagnostic(token, source, Level.INFO, null, code, args));
+    public void infoAt(Token token, DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(token, source, Level.INFO, null, code, details));
     }
 
     @Override
-    public void warnAt(Token token, DiagnosticCode code, Object... args) {
-        report(buildDiagnostic(token, source, Level.WARN, null, code, args));
+    public void warnAt(Token token, DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(token, source, Level.WARN, null, code, details));
     }
 
     @Override
-    public void errorAt(Token token, DiagnosticCode code, Object... args) {
-        report(buildDiagnostic(token, source, Level.ERROR, null, code, args));
+    public void errorAt(Token token, DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(token, source, Level.ERROR, null, code, details));
     }
 
     @Override
-    public void errorAt(Token token, Throwable cause, DiagnosticCode code, Object... args) {
-        report(buildDiagnostic(token, source, Level.ERROR, cause, code, args));
+    public void errorAt(Token token, Throwable cause, DiagnosticCode code, Object... details) {
+        report(buildDiagnostic(token, source, Level.ERROR, cause, code, details));
     }
 
     //
@@ -268,40 +268,40 @@ public abstract class AbstractReporter<T extends AbstractReporter<?>> implements
     //
 
     /// With message string
-    protected Diagnostic buildDiagnostic(String source, Level level, String message, Object... args) {
+    protected Diagnostic buildDiagnostic(String source, Level level, String message, Object... details) {
         return new Diagnostic(
             null,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
-            source, level, null, null, message, args
+            source, level, null, null, message, details
         );
     }
 
     /// With diagnostic code, and cause
-    protected Diagnostic buildDiagnostic(String source, Level level, Throwable cause, DiagnosticCode code, Object... args) {
+    protected Diagnostic buildDiagnostic(String source, Level level, Throwable cause, DiagnosticCode code, Object... details) {
         return new Diagnostic(
             null,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
             LocatableException.UNKNOWN_COORD,
-            source, level, cause, code, null, args
+            source, level, cause, code, null, details
         );
     }
 
     /// With diagnostic code, location, and cause
-    protected Diagnostic buildDiagnostic(URI uri, int line, int column, int start, int end, String source, Level level, Throwable cause, DiagnosticCode code, Object... args) {
-        return new Diagnostic(uri, line, column, start, end, source, level, cause, code, null, args);
+    protected Diagnostic buildDiagnostic(URI uri, int line, int column, int startOffset, int endOffset, String source, Level level, Throwable cause, DiagnosticCode code, Object... details) {
+        return new Diagnostic(uri, line, column, startOffset, endOffset, source, level, cause, code, null, details);
     }
 
     /// With diagnostic code, token, and cause
-    protected Diagnostic buildDiagnostic(Token token, String source, Level level, Throwable cause, DiagnosticCode code, Object... args) {
+    protected Diagnostic buildDiagnostic(Token token, String source, Level level, Throwable cause, DiagnosticCode code, Object... details) {
         if (token == null) {
             throw new IllegalArgumentException("Token must not be null");
         }
-        return new Diagnostic(null, token, source, level, cause, code, null, args);
+        return new Diagnostic(null, token, source, level, cause, code, null, details);
     }
 
     private boolean isProblem(Level level) {

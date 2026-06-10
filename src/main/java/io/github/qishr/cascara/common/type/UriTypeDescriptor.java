@@ -4,7 +4,7 @@ import java.net.URI;
 
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 
-public class UriTypeDescriptor extends AbstractTypeDescriptor {
+public class UriTypeDescriptor extends AbstractScalarDescriptor {
 
     public static final String FORMAT = "uri";
     public static final String SCHEMA_TYPE = "string";
@@ -15,8 +15,8 @@ public class UriTypeDescriptor extends AbstractTypeDescriptor {
 
 	@Override
 	public void toSchema(MapAstNode<?,?> node) {
-        node.put(TYPE_KEYWORD, SCHEMA_TYPE);
-        node.put(FORMAT_KEYWORD, FORMAT);
+        node.put(SCHEMA_TYPE, SCHEMA_TYPE);
+        node.put(SCHEMA_FORMAT, FORMAT);
 	}
 
     @Override

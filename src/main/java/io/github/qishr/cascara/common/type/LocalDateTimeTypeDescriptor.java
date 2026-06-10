@@ -3,7 +3,7 @@ package io.github.qishr.cascara.common.type;
 import java.time.LocalDateTime;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 
-public class LocalDateTimeTypeDescriptor extends AbstractTypeDescriptor {
+public class LocalDateTimeTypeDescriptor extends AbstractScalarDescriptor {
 
     public static final String FORMAT = "date-time";
     public static final String SCHEMA_TYPE = "string";
@@ -14,8 +14,8 @@ public class LocalDateTimeTypeDescriptor extends AbstractTypeDescriptor {
 
 	@Override
 	public void toSchema(MapAstNode<?,?> node) {
-        node.put(TYPE_KEYWORD, SCHEMA_TYPE);
-        node.put(FORMAT_KEYWORD, FORMAT);
+        node.put(SCHEMA_TYPE, SCHEMA_TYPE);
+        node.put(SCHEMA_FORMAT, FORMAT);
 	}
 
     @Override

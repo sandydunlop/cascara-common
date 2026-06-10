@@ -124,7 +124,7 @@ public class ModulePath {
         return moduleName;
     }
 
-    private String processDirectoryUrl(File directory, URL[] urls, String moduleName) {
+    public String processDirectoryUrl(File directory, URL[] urls, String moduleName) {
         try (URLClassLoader classLoader = new URLClassLoader(urls)) {
             try(Stream<Path> classFiles = Files.walk(directory.toPath())) {
                 for (Path classFile : classFiles.toList()) {
@@ -139,7 +139,7 @@ public class ModulePath {
         return moduleName;
     }
 
-    private String processClassFile(File directory, File file, URLClassLoader classLoader, String moduleName) throws LocalizableIOException {
+    public String processClassFile(File directory, File file, URLClassLoader classLoader, String moduleName) throws LocalizableIOException {
         Path filePath = file.toPath();
         String className = "";
         String relativePath = "";

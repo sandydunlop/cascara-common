@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 
-public class UuidTypeDescriptor extends AbstractTypeDescriptor {
+public class UuidTypeDescriptor extends AbstractScalarDescriptor {
 
     public static final String FORMAT = "uuid";
     public static final String SCHEMA_TYPE = "string";
@@ -15,8 +15,8 @@ public class UuidTypeDescriptor extends AbstractTypeDescriptor {
 
 	@Override
 	public void toSchema(MapAstNode<?,?> node) {
-        node.put(TYPE_KEYWORD, SCHEMA_TYPE);
-        node.put(FORMAT_KEYWORD, FORMAT);
+        node.put(SCHEMA_TYPE, SCHEMA_TYPE);
+        node.put(SCHEMA_FORMAT, FORMAT);
 	}
 
     @Override

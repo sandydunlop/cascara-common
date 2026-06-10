@@ -52,8 +52,10 @@ public abstract class LocatableException extends LocalizableRuntimeException {
     public String getLocalizedMessage() {
         String baseMessage = super.getLocalizedMessage();
         if (uri == null) {
+            // TODO: i18n this
             return String.format("%s at line %d", baseMessage, line);
         } else {
+            // TODO: i18n this
             return String.format("%s at %s:%d", baseMessage, uri.toString(), line);
         }
     }
