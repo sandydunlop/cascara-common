@@ -1,37 +1,54 @@
 package io.github.qishr.cascara.common.type;
 
-public abstract class AbstractScalarDescriptor extends AbstractTypeDescriptor implements ScalarDescriptor {
-    protected static final String SCHEMA_TYPE = "type";
-    protected static final String SCHEMA_FORMAT = "format";
-    protected static final String SCHEMA_CONTENT_ENCODING = "contentEncoding";
+import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 
-    protected AbstractScalarDescriptor(Class<?> type, String schemaType, String format) {
-        this(type, schemaType, format, null);
+public abstract class AbstractScalarDescriptor<T> extends AbstractTypeDescriptor<T> implements ScalarDescriptor<T> {
+    private static final String KEYWORD_FORMAT = "format";
+    private static final String KEYWORD_CONTENT_ENCODING = "contentEncoding";
+
+    private String format;
+    private String contentEncoding;
+
+    protected AbstractScalarDescriptor(Class<T> jvmType, String type, String format) {
+        this(jvmType, type, format, null);
     }
 
-    protected AbstractScalarDescriptor(Class<?> type, String schemaType, String format, String contentEncoding) {
-        super(type);
+    protected AbstractScalarDescriptor(Class<T> jvmType, String schemaType, String format, String contentEncoding) {
+        super(jvmType, schemaType);
 
-        if (schemaType != null && !schemaType.isEmpty()) {
-            properties.set(SCHEMA_TYPE, schemaType);
-        }
+        this.format = format;
+        this.contentEncoding = contentEncoding;
+
         if (format != null && !format.isEmpty()) {
-            properties.set(SCHEMA_FORMAT, format);
+            properties.set(KEYWORD_FORMAT, format);
         }
         if (contentEncoding != null && !contentEncoding.isEmpty()) {
-            properties.set(SCHEMA_CONTENT_ENCODING, format);
+            properties.set(KEYWORD_CONTENT_ENCODING, contentEncoding);
         }
     }
 
-    public String getType() {
-        return properties.getString(SCHEMA_TYPE);
-    }
-
+    @Override
     public String getFormat() {
-        return properties.getString(SCHEMA_FORMAT);
+        return properties.getString(KEYWORD_FORMAT);
     }
 
+    @Override
     public String getContentEncoding() {
-        return properties.getString(SCHEMA_CONTENT_ENCODING);
+        return properties.getString(KEYWORD_CONTENT_ENCODING);
+    }
+
+    @Override
+    public void populateSchema(MapAstNode<?,?> node) {
+        super.populateSchema(node);
+
+        // Inject other properties scalars might declare.
+
+        if (format != null && !format.isEmpty()) {
+            node.put(KEYWORD_FORMAT, format);
+        }
+
+        if (contentEncoding != null && !contentEncoding.isEmpty()) {
+            node.put(KEYWORD_CONTENT_ENCODING, contentEncoding);
+        }
     }
 }

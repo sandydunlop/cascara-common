@@ -22,7 +22,8 @@ module cascara.common {
     opens io.github.qishr.cascara.common.util;
 
     provides io.github.qishr.cascara.common.type.ScalarDescriptor
-        with io.github.qishr.cascara.common.type.InstantTypeDescriptor,
+        with io.github.qishr.cascara.common.type.ByteArrayDescriptor,
+             io.github.qishr.cascara.common.type.InstantTypeDescriptor,
              io.github.qishr.cascara.common.type.LocalDateTimeTypeDescriptor,
              io.github.qishr.cascara.common.type.PathTypeDescriptor,
              io.github.qishr.cascara.common.type.UriTypeDescriptor,

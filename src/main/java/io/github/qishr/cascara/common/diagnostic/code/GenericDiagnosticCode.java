@@ -20,6 +20,7 @@ public enum GenericDiagnosticCode implements DiagnosticCode {
     FORMAT_ERROR("ERROR-401", "Format error: {0}."),
     INVALID_URI("ERROR-402", "Invalid URI: {0}."),
     UNKNOWN_URI_SCHEME("ERROR-403", "Unknown URI scheme: {0}."),
+    MALFORMED_BASE64("ERROR-404", "Malformed Base64 payload"),
 
     NO_RESOURCE_PROVIDER("ERROR-501", "No resource provider.");
 

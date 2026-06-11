@@ -1,33 +1,19 @@
 package io.github.qishr.cascara.common.type;
 
 import java.time.LocalDateTime;
-import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 
-public class LocalDateTimeTypeDescriptor extends AbstractScalarDescriptor {
-
-    public static final String FORMAT = "date-time";
-    public static final String SCHEMA_TYPE = "string";
-
+public class LocalDateTimeTypeDescriptor extends AbstractScalarDescriptor<LocalDateTime> {
     public LocalDateTimeTypeDescriptor() {
-        super(LocalDateTime.class, SCHEMA_TYPE, FORMAT);
+        super(LocalDateTime.class, "string", "date-time");
     }
 
-	@Override
-	public void toSchema(MapAstNode<?,?> node) {
-        node.put(SCHEMA_TYPE, SCHEMA_TYPE);
-        node.put(SCHEMA_FORMAT, FORMAT);
-	}
-
     @Override
-    public Object toType(String text) {
+    public LocalDateTime toJvmType(String text) {
         return LocalDateTime.parse(text);
     }
 
     @Override
-    public String toText(Object object) {
-        if (object instanceof LocalDateTime dateTime) {
-            return dateTime.toString();
-        }
-        return null;
+    public Primitive toPrimitive(LocalDateTime value) {
+        return Primitive.of(value.toString());
     }
 }

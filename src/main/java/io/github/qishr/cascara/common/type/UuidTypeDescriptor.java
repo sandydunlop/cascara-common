@@ -2,33 +2,18 @@ package io.github.qishr.cascara.common.type;
 
 import java.util.UUID;
 
-import io.github.qishr.cascara.common.lang.ast.MapAstNode;
-
-public class UuidTypeDescriptor extends AbstractScalarDescriptor {
-
-    public static final String FORMAT = "uuid";
-    public static final String SCHEMA_TYPE = "string";
-
+public class UuidTypeDescriptor extends AbstractScalarDescriptor<UUID> {
     public UuidTypeDescriptor() {
-        super(UUID.class, SCHEMA_TYPE, FORMAT);
+        super(UUID.class, "string", "uuid");
     }
 
-	@Override
-	public void toSchema(MapAstNode<?,?> node) {
-        node.put(SCHEMA_TYPE, SCHEMA_TYPE);
-        node.put(SCHEMA_FORMAT, FORMAT);
-	}
-
     @Override
-    public Object toType(String text) {
+    public UUID toJvmType(String text) {
         return UUID.fromString(text);
     }
 
     @Override
-    public String toText(Object object) {
-        if (object instanceof UUID uri) {
-            return uri.toString();
-        }
-        return null;
+    public Primitive toPrimitive(UUID value) {
+        return Primitive.of(value.toString());
     }
 }

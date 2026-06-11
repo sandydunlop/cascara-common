@@ -46,5 +46,5 @@ public interface Serializer<A extends AstNode> extends Processor {
     /// @throws SerializerException If the AST structure does not match the target type.
     <C> C fromAst(A astNode, Class<C> clazz);
 
-    void addTypeDescriptor(TypeDescriptor typeDescriptor);
+    void registerTypeDescriptor(TypeDescriptor<?> typeDescriptor);
 }

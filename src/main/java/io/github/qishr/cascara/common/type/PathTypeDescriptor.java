@@ -2,33 +2,18 @@ package io.github.qishr.cascara.common.type;
 
 import java.nio.file.Path;
 
-import io.github.qishr.cascara.common.lang.ast.MapAstNode;
-
-public class PathTypeDescriptor extends AbstractScalarDescriptor {
-
-    public static final String FORMAT = "path";
-    public static final String SCHEMA_TYPE = "string";
-
+public class PathTypeDescriptor extends AbstractScalarDescriptor<Path> {
     public PathTypeDescriptor() {
-        super(Path.class, SCHEMA_TYPE, FORMAT);
+        super(Path.class, "string", "path");
     }
 
-	@Override
-	public void toSchema(MapAstNode<?,?> node) {
-        node.put(SCHEMA_TYPE, SCHEMA_TYPE);
-        node.put(SCHEMA_FORMAT, FORMAT);
-	}
-
     @Override
-    public Object toType(String text) {
+    public Path toJvmType(String text) {
         return Path.of(text);
     }
 
     @Override
-    public String toText(Object object) {
-        if (object instanceof Path uri) {
-            return uri.toString();
-        }
-        return null;
+    public Primitive toPrimitive(Path value) {
+        return Primitive.of(value.toString());
     }
 }
