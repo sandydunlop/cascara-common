@@ -45,10 +45,11 @@ public class ServiceProviderLayer {
     private List<ServiceProviderLayer> children = new ArrayList<>();
     private Map<String,ServiceProviderLayer> namedChildren = new HashMap<>();
 
+    private List<ServiceMetadata> orderedProviders = new ArrayList<>();
+
     private Map<String,ServiceMetadata> providersByFqcn = new HashMap<>();
     private Map<String,ServiceMetadata> servicesByFqcn = new HashMap<>();
     private Map<Class<ServiceProvider>, Set<ServiceMetadata>> providersByServiceType = new HashMap<>();
-    // private Map<String, Properties> providerPropertiesByFqcn = new HashMap<>();
 
     private ServiceProviderLayer() { }
 
@@ -199,7 +200,7 @@ public class ServiceProviderLayer {
         return this;
     }
 
-    /// Retrieves metadata of the sprcified provider if it exists in this layer.
+    /// Retrieves metadata of the specified provider if it exists in this layer.
     public ServiceMetadata getProvider(String providerName) {
         return providersByFqcn.get(providerName);
     }
@@ -226,13 +227,18 @@ public class ServiceProviderLayer {
     public List<ServiceMetadata> getProviders(Class<? extends ServiceProvider> serviceType, Predicate<Properties> capabilityPredicate) {
         List<ServiceMetadata> found = new ArrayList<>();
         if (providersByServiceType.get(serviceType) != null) {
-            Set<ServiceMetadata> set = providersByServiceType.get(serviceType);
-            for (ServiceMetadata provider : set) {
-                if (capabilityPredicate.test(provider.getProperties())) {
-                    // if (capabilityType == null || provider.getCapabilityType().isAssignableFrom(capabilityType)) {
+
+
+            // TODO: These need to be ordered...
+            // Set<ServiceMetadata> set = providersByServiceType.get(serviceType);
+
+
+            for (ServiceMetadata provider : orderedProviders) {
+                if (provider.getType().equals(serviceType)) {
+                    if (capabilityPredicate.test(provider.getProperties())) {
                         found.add(provider);
                         reportFinding(provider, 0);
-                    // }
+                    }
                 }
             }
         }
@@ -380,6 +386,7 @@ public class ServiceProviderLayer {
             if (collectCascaraModuleInterfaces(providerClass, interfaceHierarchy)) {
                 ServiceMetadata provider = new ServiceMetadata(providerClass, getProviderProperties(instance, jarPath));
 
+                orderedProviders.add(provider);
                 providersByFqcn.put(providerClass.getName(), provider);
 
                 for (Class<ServiceProvider> serviceInterface : interfaceHierarchy) {
@@ -496,15 +503,16 @@ public class ServiceProviderLayer {
         List<ServiceMetadata> found = new ArrayList<>();
 
         if (providersByServiceType.get(serviceType) != null) {
-            Set<ServiceMetadata> set = providersByServiceType.get(serviceType);
-            for (ServiceMetadata provider : set) {
-                if (capabilityPredicate == null) {
-                    found.add(provider);
-                    reportFinding(provider, 0);
-                } else {
-                    if (capabilityPredicate.test(provider.getProperties())) {
+            for (ServiceMetadata provider : orderedProviders) {
+                if (serviceType.isAssignableFrom(provider.getType())) {
+                    if (capabilityPredicate == null) {
                         found.add(provider);
                         reportFinding(provider, 0);
+                    } else {
+                        if (capabilityPredicate.test(provider.getProperties())) {
+                            found.add(provider);
+                            reportFinding(provider, 0);
+                        }
                     }
                 }
             }
@@ -531,15 +539,16 @@ public class ServiceProviderLayer {
         getReporter().trace("" + "  ".repeat(depth) + "⬇ " + name);
 
         if (providersByServiceType.get(serviceType) != null) {
-            Set<ServiceMetadata> set = providersByServiceType.get(serviceType);
-            for (ServiceMetadata provider : set) {
-                if (capabilityPredicate == null) {
-                    found.add(provider);
-                    reportFinding(provider, depth);
-                } else {
-                    if (capabilityPredicate.test(provider.getProperties())) {
+            for (ServiceMetadata provider : orderedProviders) {
+                if (serviceType.isAssignableFrom(provider.getType())) {
+                    if (capabilityPredicate == null) {
                         found.add(provider);
                         reportFinding(provider, depth);
+                    } else {
+                        if (capabilityPredicate.test(provider.getProperties())) {
+                            found.add(provider);
+                            reportFinding(provider, depth);
+                        }
                     }
                 }
             }
