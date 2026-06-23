@@ -214,11 +214,12 @@ public class ServiceProviderLayer {
     public List<ServiceMetadata> getProviders(Class<? extends ServiceProvider> serviceType) {
         List<ServiceMetadata> found = new ArrayList<>();
         if (providersByServiceType.get(serviceType) != null) {
-            Set<ServiceMetadata> set = providersByServiceType.get(serviceType);
-            for (ServiceMetadata item : set) {
-                reportFinding(item, 0);
+            for (ServiceMetadata provider : orderedProviders) {
+                if (serviceType.isAssignableFrom(provider.getType())) {
+                    reportFinding(provider, 0);
+                    found.add(provider);
+                }
             }
-            found.addAll(set);
         }
         return found;
     }
@@ -227,14 +228,8 @@ public class ServiceProviderLayer {
     public List<ServiceMetadata> getProviders(Class<? extends ServiceProvider> serviceType, Predicate<Properties> capabilityPredicate) {
         List<ServiceMetadata> found = new ArrayList<>();
         if (providersByServiceType.get(serviceType) != null) {
-
-
-            // TODO: These need to be ordered...
-            // Set<ServiceMetadata> set = providersByServiceType.get(serviceType);
-
-
             for (ServiceMetadata provider : orderedProviders) {
-                if (provider.getType().equals(serviceType)) {
+                if (serviceType.isAssignableFrom(provider.getType())) {
                     if (capabilityPredicate.test(provider.getProperties())) {
                         found.add(provider);
                         reportFinding(provider, 0);
