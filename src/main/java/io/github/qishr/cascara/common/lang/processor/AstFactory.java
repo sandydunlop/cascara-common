@@ -16,8 +16,9 @@ public interface AstFactory<
     E extends MapEntryAstNode<N>
 > {
     S createScalarNode(Object primitiveValue);
+    S createScalarNode(Object primitiveValue, QuoteStyle quoteStyle);
     S createScalarNode(Primitive primitive);
+    N createScalarKeyNode(Object key);
     L createSequenceNode();
     M createMapNode();
-    S createScalarNode(Object key, QuoteStyle quoteStyle);
 }

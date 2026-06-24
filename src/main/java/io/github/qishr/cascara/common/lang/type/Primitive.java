@@ -40,9 +40,9 @@ public class Primitive {
         if (specifiedQuoteStyle != null) {
             return specifiedQuoteStyle;
         }
-
         if (originalQuotedStyle == null) {
-            // TODO: Do we want to cache this?
+            // Do we want to cache this?
+            // If we really want to cache it, then invalidate the cache when the delegate gets set
             return inferQuoteStyle(rawInput);
         }
         return originalQuotedStyle;

@@ -15,7 +15,6 @@ import io.github.qishr.cascara.common.diagnostic.NoOpReporter;
 import io.github.qishr.cascara.common.diagnostic.Reporter;
 import io.github.qishr.cascara.common.diagnostic.code.GenericDiagnosticCode;
 import io.github.qishr.cascara.common.diagnostic.code.LangDiagnosticCode;
-import io.github.qishr.cascara.common.lang.QuoteStyle;
 import io.github.qishr.cascara.common.lang.annotation.AnyGetter;
 import io.github.qishr.cascara.common.lang.annotation.AnySetter;
 import io.github.qishr.cascara.common.lang.annotation.DataField;
@@ -27,7 +26,6 @@ import io.github.qishr.cascara.common.lang.ast.MapEntryAstNode;
 import io.github.qishr.cascara.common.lang.ast.ScalarAstNode;
 import io.github.qishr.cascara.common.lang.ast.SequenceAstNode;
 import io.github.qishr.cascara.common.lang.exception.SerializerException;
-import io.github.qishr.cascara.common.lang.processor.Serializer;
 import io.github.qishr.cascara.common.lang.type.Primitive;
 import io.github.qishr.cascara.common.lang.type.PrimitiveDelegate;
 import io.github.qishr.cascara.common.lang.type.ScalarDescriptor;
@@ -82,12 +80,11 @@ public abstract class AbstractSerializer<
     //
     //
 
-    /// Creates the appropriate YamlNode (Scalar, Sequence, or Map) based on the Java value type.
+    /// Creates the appropriate AstNode (Scalar, Sequence, or Map) based on the Java value type.
 	@SuppressWarnings("unchecked")
     protected N serialize(Object jvmInstance) {
         if (isPrimitive(jvmInstance)) {
             return (N)astFactory.createScalarNode(jvmInstance);
-            // return new YamlScalarNode(jvmInstance);
         }
 
         TypeDescriptor<?> typeDescriptor = getTypeDescriptor(jvmInstance.getClass());
@@ -103,12 +100,10 @@ public abstract class AbstractSerializer<
                     // If you're wondering why this is not a String,
                     // an Instant is not a String - it's a Long
                     primitive = descriptor.toPrimitive(jvmInstance).setDelegate(primitiveDelegate);
-                    // primitive = descriptor.toPrimitive(jvmInstance).setDelegate(YAML_PRIMITIVE_DELEGATE);
                 } catch (Exception e) {
                     throw new SerializerException(e, LangDiagnosticCode.FAILED_TO_MAP_AST, jvmInstance.getClass().getSimpleName(), e.getMessage());
                 }
                 return (N)astFactory.createScalarNode(primitive);
-                // return YamlScalarNode.fromPrimitive(primitive);
             }
         }
 
@@ -166,7 +161,7 @@ public abstract class AbstractSerializer<
                     ? field.getAnnotation(DataField.class).key() : field.getName();
                 if (keyName == null || keyName.isEmpty()) keyName = field.getName();
 
-                N keyNode = castToNode(astFactory.createScalarNode(keyName, QuoteStyle.PLAIN));
+                N keyNode = castToNode(astFactory.createScalarKeyNode(keyName));
 
                 N valueNode = serialize(value);
                 rootMap.put(keyNode, valueNode);
@@ -236,8 +231,10 @@ public abstract class AbstractSerializer<
             if (entry.getKey() == null) continue;
 
             // TODO: Key might not be a scalar
-            N keyNode = castToNode(astFactory.createScalarNode(entry.getKey(), QuoteStyle.PLAIN));
+            N keyNode = castToNode(astFactory.createScalarKeyNode(entry.getKey()));
 
+            // TODO: Should this be literal null instead of empty string?
+            // Surely JSON treats them differently.
             N valueNode = (entry.getValue() == null)
                 ? castToNode(astFactory.createScalarNode(""))
                 : serialize(entry.getValue());
@@ -461,6 +458,7 @@ public abstract class AbstractSerializer<
             if (entry.getKey() instanceof ScalarAstNode scalarKey) {
                 key = deserializeScalar(scalarKey, keyType);
             } else {
+                // TODO: Implement this...
                 throw new SerializerException(node, GenericDiagnosticCode.ERROR, "Non-scalar key not implemented");
             }
 
@@ -573,8 +571,8 @@ public abstract class AbstractSerializer<
             if (method.isAnnotationPresent(AnySetter.class)) {
                 method.setAccessible(true);
                 for (E entry : rootMap.getEntries()) {
-                    // entry.getKey() returns a YamlNode.
-                    // We use toString() because our YamlScalarNode override returns stringValue.
+                    // entry.getKey() returns an Astode.
+                    // We use toString() because our ScalarAstNode override returns stringValue.
                     String key = entry.getKey().toString();
 
                     if (!claimedKeys.contains(key) && !isSchemaOrId(key)) {
