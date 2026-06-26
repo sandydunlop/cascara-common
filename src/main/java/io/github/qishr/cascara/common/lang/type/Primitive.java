@@ -2,7 +2,7 @@ package io.github.qishr.cascara.common.lang.type;
 
 import java.util.Objects;
 
-import io.github.qishr.cascara.common.lang.QuoteStyle;
+import io.github.qishr.cascara.common.lang.util.QuoteStyle;
 
 public class Primitive {
     private PrimitiveDelegate delegate;

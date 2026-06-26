@@ -20,6 +20,7 @@ import io.github.qishr.cascara.common.lang.annotation.AnySetter;
 import io.github.qishr.cascara.common.lang.annotation.DataField;
 import io.github.qishr.cascara.common.lang.annotation.DataIgnore;
 import io.github.qishr.cascara.common.lang.annotation.Serializable;
+import io.github.qishr.cascara.common.lang.ast.AstNodeFactory;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.ast.MapAstNode;
 import io.github.qishr.cascara.common.lang.ast.MapEntryAstNode;
@@ -46,14 +47,14 @@ public abstract class AbstractSerializer<
     protected Reporter reporter = new NoOpReporter();
     private Properties properties;
     private final String contentType;
-    private final AstFactory<N,S,L,M,E> astFactory;
+    private final AstNodeFactory<N,S,L,M,E> astFactory;
 
     private final Map<Class<?>,TypeDescriptor<?>> typeDescriptors = new HashMap<>();
     private final ServiceProviderFactory providerFactory = new ServiceProviderFactory();
 
     private final PrimitiveDelegate primitiveDelegate;
 
-    protected AbstractSerializer(String contentType, AstFactory<N,S,L,M,E> astFactory, PrimitiveDelegate primitiveDelegate) {
+    protected AbstractSerializer(String contentType, AstNodeFactory<N,S,L,M,E> astFactory, PrimitiveDelegate primitiveDelegate) {
         this.contentType = contentType;
         this.astFactory = astFactory;
         this.primitiveDelegate = primitiveDelegate;
