@@ -183,6 +183,12 @@ public class Primitive {
 
     private static boolean isLikelyNumeric(String str) {
         if (str == null || str.isEmpty()) return false;
+
+        // Explicitly treat unquoted Infinity variations as numeric names
+        if (str.endsWith("Infinity") || "NaN".equals(str)) {
+            return true;
+        }
+
         char first = str.charAt(0);
         // Quick check for standard start characters
         if (!Character.isDigit(first) && first != '-' && first != '+' && first != '.') {

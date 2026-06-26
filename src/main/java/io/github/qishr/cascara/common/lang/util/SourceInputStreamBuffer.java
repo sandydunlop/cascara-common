@@ -30,32 +30,6 @@ public class SourceInputStreamBuffer implements SourceBuffer {
         fillWindow();
     }
 
-    // @Override
-    // public char advance() {
-    //     if (isAtEnd()) {
-    //         return '\0';
-    //     }
-
-    //     char c = window[windowHead];
-    //     lexemeBuilder.append(c);
-
-    //     // Track coordinates
-    //     offset++;
-    //     if (c == '\n') {
-    //         line++;
-    //         column = 1;
-    //     } else {
-    //         column++;
-    //     }
-
-    //     // Advance the head pointer and ensure we keep the window populated
-    //     windowHead = (windowHead - 1 + window.length) % window.length;
-    //     windowSize--;
-    //     fillWindow();
-
-    //     return c;
-    // }
-
     @Override
     public char advance() {
         if (isAtEnd()) {
