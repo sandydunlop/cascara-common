@@ -48,7 +48,6 @@ public class SourceInputStreamBuffer implements SourceBuffer {
             column++;
         }
 
-        // FIX: Advance forward, not backward
         windowHead = (windowHead + 1) % window.length;
         windowSize--;
         fillWindow();
