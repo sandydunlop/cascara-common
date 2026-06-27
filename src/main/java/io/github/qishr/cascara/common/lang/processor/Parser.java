@@ -13,9 +13,13 @@ public interface Parser<N extends AstNode, T extends Token> extends Processor {
     /// @return The root [AstNode].
     N parse(String text);
 
+    /// Entry point for parsing an `InputStream`.
+    ///
+    /// @param InputStream is An input stream of the raw text source.
+    /// @return The root [AstNode].
     N parse(InputStream is);
 
-    /// Parses the top-level document structure and handles stream boundaries.
+    /// Entry point for parsing a list of tokens.
     ///
     /// @param tokens A list of tokens representing the tokenized text source.
     /// @return The root [AstNode].
