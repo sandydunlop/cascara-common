@@ -19,6 +19,12 @@ public interface Parser<N extends AstNode, T extends Token> extends Processor {
     /// @return The root [AstNode].
     N parse(InputStream is);
 
+    /// Primary parsing core driven directly by the Tokenizer interface structure.
+    ///
+    /// @param tokenizer the tokenizer instance.
+    /// @return The root [AstNode].
+    N parse(Tokenizer<T> tokenizer);
+
     /// Entry point for parsing a list of tokens.
     ///
     /// @param tokens A list of tokens representing the tokenized text source.
