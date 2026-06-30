@@ -3,10 +3,12 @@ package io.github.qishr.cascara.common.lang.processor;
 import java.io.InputStream;
 import java.util.List;
 
+import io.github.qishr.cascara.common.lang.annotation.Beta;
 import io.github.qishr.cascara.common.lang.ast.AstNode;
 import io.github.qishr.cascara.common.lang.token.Token;
 
-public interface Parser<N extends AstNode, T extends Token> extends Processor {
+@Beta
+public interface AstParser<N extends AstNode, T extends Token> extends Processor {
     /// Entry point for parsing a source string.
     ///
     /// @param text The raw text source.
